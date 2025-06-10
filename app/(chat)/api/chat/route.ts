@@ -62,12 +62,31 @@ function getStreamContext() {
 }
 
 export async function POST(request: Request) {
+  // 📝 【日志】POST 请求开始
+  console.log('\n🚀 === POST /api/chat 请求开始 ===');
+  console.log('⏰ 请求时间:', new Date().toISOString());
+  console.log('🌐 请求来源:', request.headers.get('user-agent'));
+  console.log('📍 请求URL:', request.url);
+
   let requestBody: PostRequestBody;
 
   try {
+    console.log('📦 开始解析请求体...');
     const json = await request.json();
+    console.log('📋 原始请求数据:', {
+      hasId: !!json.id,
+      hasMessage: !!json.message,
+      messageLength: json.message?.content?.length || 0,
+      hasAttachments: !!(json.message?.experimental_attachments?.length),
+      attachmentsCount: json.message?.experimental_attachments?.length || 0,
+      selectedChatModel: json.selectedChatModel,
+      selectedVisibilityType: json.selectedVisibilityType,
+    });
+
     requestBody = postRequestBodySchema.parse(json);
-  } catch (_) {
+    console.log('✅ 请求体验证通过');
+  } catch (error) {
+    console.error('❌ 请求体解析失败:', error instanceof Error ? error.message : String(error));
     return new ChatSDKError('bad_request:api').toResponse();
   }
 
@@ -75,29 +94,59 @@ export async function POST(request: Request) {
     const { id, message, selectedChatModel, selectedVisibilityType } =
       requestBody;
 
+    console.log('📊 请求详情:', {
+      chatId: id,
+      messageId: message.id,
+      messageRole: message.role,
+      messageLength: message.content.length,
+      selectedModel: selectedChatModel,
+      visibility: selectedVisibilityType,
+    });
+
+    console.log('🔐 开始用户认证...');
     const session = await auth();
 
     if (!session?.user) {
+      console.error('❌ 用户未认证');
       return new ChatSDKError('unauthorized:chat').toResponse();
     }
 
+    console.log('✅ 用户认证成功:', {
+      userId: session.user.id,
+      userEmail: session.user.email,
+      userType: session.user.type,
+    });
+
     const userType: UserType = session.user.type;
 
+    console.log('📊 检查用户消息限制...');
     const messageCount = await getMessageCountByUserId({
       id: session.user.id,
       differenceInHours: 24,
     });
 
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
-      return new ChatSDKError('rate_limit:chat').toResponse();
-    }
+    console.log('📈 用户今日消息统计:', {
+      messageCount,
+      userType,
+      maxAllowed: entitlementsByUserType[userType].maxMessagesPerDay,
+      isLimitReached: messageCount > entitlementsByUserType[userType].maxMessagesPerDay,
+    });
 
+    // if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
+    //   console.error('❌ 用户消息限制已达上限');
+    //   return new ChatSDKError('rate_limit:chat').toResponse();
+    // }
+
+    console.log('💬 开始处理聊天记录...');
     const chat = await getChatById({ id });
 
     if (!chat) {
+      console.log('📝 聊天不存在，创建新聊天...');
       const title = await generateTitleFromUserMessage({
         message,
       });
+
+      console.log('🏷️ 生成聊天标题:', title);
 
       await saveChat({
         id,
@@ -105,19 +154,54 @@ export async function POST(request: Request) {
         title,
         visibility: selectedVisibilityType,
       });
+
+      console.log('✅ 新聊天创建成功:', {
+        chatId: id,
+        title,
+        visibility: selectedVisibilityType,
+      });
     } else {
+      console.log('✅ 找到现有聊天:', {
+        chatId: id,
+        title: chat.title,
+        userId: chat.userId,
+        visibility: chat.visibility,
+        createdAt: chat.createdAt,
+      });
+
       if (chat.userId !== session.user.id) {
+        console.error('❌ 聊天所有权验证失败:', {
+          chatUserId: chat.userId,
+          currentUserId: session.user.id,
+        });
         return new ChatSDKError('forbidden:chat').toResponse();
       }
+
+      console.log('✅ 聊天所有权验证通过');
     }
 
+    console.log('📚 获取历史消息...');
     const previousMessages = await getMessagesByChatId({ id });
+
+    console.log('📊 历史消息统计:', {
+      messageCount: previousMessages.length,
+      firstMessage: previousMessages[0] ? {
+        role: previousMessages[0].role,
+        createdAt: previousMessages[0].createdAt,
+      } : null,
+      lastMessage: previousMessages[previousMessages.length - 1] ? {
+        role: previousMessages[previousMessages.length - 1].role,
+        createdAt: previousMessages[previousMessages.length - 1].createdAt,
+      } : null,
+    });
 
     const messages = appendClientMessage({
       // @ts-expect-error: todo add type conversion from DBMessage[] to UIMessage[]
       messages: previousMessages,
       message,
     });
+
+    console.log('✅ 消息列表构建完成，总计:', messages.length, '条消息');
 
     const { longitude, latitude, city, country } = geolocation(request);
 
@@ -128,6 +212,9 @@ export async function POST(request: Request) {
       country,
     };
 
+    console.log('🌍 地理位置信息:', requestHints);
+
+    console.log('💾 保存用户消息到数据库...');
     await saveMessages({
       messages: [
         {
@@ -141,11 +228,36 @@ export async function POST(request: Request) {
       ],
     });
 
+    console.log('✅ 用户消息保存成功:', {
+      messageId: message.id,
+      partsCount: message.parts.length,
+      attachmentsCount: message.experimental_attachments?.length || 0,
+    });
+
+    console.log('🆔 生成流式响应ID...');
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
 
+    console.log('✅ 流式响应ID创建成功:', streamId);
+    console.log('准备开始调用 createDataStream');
+
     const stream = createDataStream({
       execute: (dataStream) => {
+        // 📝 【日志】准备调用大模型进行文本生成
+        console.log('\n=== 🤖 AI 大模型调用开始 ===');
+        console.log('📍 调用位置: app/(chat)/api/chat/route.ts:streamText()');
+        console.log('⏰ 调用时间:', new Date().toISOString());
+        console.log('👤 用户ID:', session.user?.id);
+        console.log('💬 聊天ID:', id);
+        console.log('🎯 选择模型:', selectedChatModel);
+        console.log('🌍 地理位置:', { longitude, latitude, city, country });
+        console.log('📨 消息数量:', messages.length);
+        console.log('📨 最后一条消息:', {
+          role: messages[messages.length - 1]?.role,
+          content: messages[messages.length - 1]?.content?.slice(0, 100) + '...',
+          attachments: messages[messages.length - 1]?.experimental_attachments?.length || 0
+        });
+
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
@@ -172,6 +284,14 @@ export async function POST(request: Request) {
             }),
           },
           onFinish: async ({ response }) => {
+            // 📝 【日志】AI响应完成
+            console.log('\n=== ✅ AI 响应完成 ===');
+            console.log('⏰ 完成时间:', new Date().toISOString());
+            console.log('📊 响应统计:', {
+              messageCount: response.messages.length,
+              response: response,
+            });
+
             if (session.user?.id) {
               try {
                 const assistantId = getTrailingMessageId({
@@ -189,6 +309,12 @@ export async function POST(request: Request) {
                   responseMessages: response.messages,
                 });
 
+                console.log('💾 保存AI响应到数据库:', {
+                  messageId: assistantId,
+                  contentLength: JSON.stringify(assistantMessage.parts).length,
+                  attachmentsCount: assistantMessage.experimental_attachments?.length || 0,
+                });
+
                 await saveMessages({
                   messages: [
                     {
@@ -202,10 +328,13 @@ export async function POST(request: Request) {
                     },
                   ],
                 });
-              } catch (_) {
-                console.error('Failed to save chat');
+
+                console.log('✅ AI响应保存成功');
+              } catch (error) {
+                console.error('❌ 保存AI响应失败:', error);
               }
             }
+            console.log('=== 🏁 AI 调用流程结束 ===\n');
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
@@ -213,30 +342,77 @@ export async function POST(request: Request) {
           },
         });
 
+        // 📝 【日志】流式响应配置
+        console.log('🔄 流式响应配置:', {
+          chunking: 'word',
+          sendReasoning: true,
+          maxSteps: 5,
+          activeTools: selectedChatModel === 'chat-model-reasoning' ? [] : [
+            'getWeather', 'createDocument', 'updateDocument', 'requestSuggestions'
+          ],
+        });
+
+        // 📝 【日志】开始消费流并合并到数据流
+        console.log('🔄 开始消费AI流式响应...');
         result.consumeStream();
 
+        console.log('🔄 将AI响应合并到数据流...');
         result.mergeIntoDataStream(dataStream, {
           sendReasoning: true,
         });
+
+        console.log('✅ 流式响应设置完成，等待AI处理...');
       },
-      onError: () => {
+      onError: (error: unknown) => {
+        console.error('\n❌ AI调用出错:', {
+          error: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+        });
         return 'Oops, an error occurred!';
       },
     });
 
+    console.log('🔄 配置流式响应上下文...');
     const streamContext = getStreamContext();
 
     if (streamContext) {
+      console.log('✅ 使用可恢复流式响应');
+      console.log('🎉 === POST 请求处理完成，开始流式响应 ===\n');
       return new Response(
         await streamContext.resumableStream(streamId, () => stream),
       );
     } else {
+      console.log('⚠️ 使用普通流式响应 (Redis不可用)');
+      console.log('🎉 === POST 请求处理完成，开始流式响应 ===\n');
       return new Response(stream);
     }
   } catch (error) {
+    console.error('\n❌ === POST 请求处理出错 ===');
+    console.error('🕰️ 错误时间:', new Date().toISOString());
+    console.error('💥 错误详情:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      type: error?.constructor?.name,
+    });
+
     if (error instanceof ChatSDKError) {
+      console.error('🚨 返回ChatSDK错误响应:', error.message);
       return error.toResponse();
     }
+
+    console.error('🚨 未处理的错误，返回通用错误响应');
+    console.error('=== POST 请求错误处理结束 ===\n');
+
+    return new Response(
+      JSON.stringify({ 
+        error: '服务器内部错误，请稍后重试',
+        details: error instanceof Error ? error.message : String(error)
+      }), 
+      { 
+        status: 500, 
+        headers: { 'Content-Type': 'application/json' } 
+      }
+    );
   }
 }
 
