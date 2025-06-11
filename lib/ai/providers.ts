@@ -11,7 +11,6 @@ import {
   reasoningModel,
   titleModel,
 } from "./models.test";
-import { xai } from "@ai-sdk/xai";
 
 // 创建第三方 OpenAI 客户端
 const openAI = createOpenAI({
@@ -21,11 +20,11 @@ const openAI = createOpenAI({
 });
 
 // 📝 【日志】AI提供商配置
-console.log('\n=== ⚙️ AI 提供商配置 ===');
-console.log('🌐 API Base URL:', process.env.OPENAI_BASE_URL);
-console.log('🔑 API Key 前4位:', process.env.OPENAI_API_KEY?.slice(0, 4) + '****');
-console.log('🧪 测试环境:', isTestEnvironment);
-console.log('=== ⚙️ 配置加载完成 ===\n');
+console.log("\n=== ⚙️ AI 提供商配置 ===");
+console.log("🌐 API Base URL:", process.env.OPENAI_BASE_URL);
+console.log("🔑 API Key 前4位:", process.env.OPENAI_API_KEY?.slice(0, 4) + "****");
+console.log("🧪 测试环境:", isTestEnvironment);
+console.log("=== ⚙️ 配置加载完成 ===\n");
 
 export const myProvider = isTestEnvironment
   ? customProvider({

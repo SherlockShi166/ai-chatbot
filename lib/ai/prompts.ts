@@ -1,5 +1,5 @@
-import type { ArtifactKind } from '@/components/artifact';
-import type { Geo } from '@vercel/functions';
+import type { ArtifactKind } from "@/components/artifact";
+import type { Geo } from "@vercel/functions";
 
 export const logoPrompt = `
 You are **ChatLogo Prompt Composer**, an expert at converting any free‑form logo request into a clear, English‑only image‑generation prompt.
@@ -78,13 +78,13 @@ When generating logos, always use artifacts with the createDocument tool. Set th
 `;
 
 export const regularPrompt =
-  'You are a friendly assistant! Keep your responses concise and helpful.';
+  "You are a friendly assistant! Keep your responses concise and helpful.";
 
 export interface RequestHints {
-  latitude: Geo['latitude'];
-  longitude: Geo['longitude'];
-  city: Geo['city'];
-  country: Geo['country'];
+  latitude: Geo["latitude"];
+  longitude: Geo["longitude"];
+  city: Geo["city"];
+  country: Geo["country"];
 }
 
 export const getRequestPromptFromHints = (requestHints: RequestHints) => `\
@@ -104,7 +104,7 @@ export const systemPrompt = ({
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
 
-  if (selectedChatModel === 'chat-model-reasoning') {
+  if (selectedChatModel === "chat-model-reasoning") {
     return `${logoPrompt}\n\n${requestPrompt}`;
   } else {
     return `${logoPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
@@ -145,7 +145,7 @@ export const updateDocumentPrompt = (
   currentContent: string | null,
   type: ArtifactKind,
 ) =>
-  type === 'image'
+  type === "image"
     ? `\
 Generate an improved logo based on the given feedback and the current logo.
 
@@ -153,4 +153,4 @@ Current logo prompt used: ${currentContent}
 
 Please create a new logo prompt following the ChatLogo Prompt Composer guidelines.
 `
-    : '';
+    : "";
