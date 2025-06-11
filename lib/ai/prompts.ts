@@ -18,28 +18,30 @@ For each user message (any language):
    • **Core Motif** (≤ 6) →  
      single‑letter monogram | letter‑pair monogram | abstract geometric symbol | chat‑bubble icon | arrow | mascot silhouette  
    • **Style** (1‑2) →  
-     flat design | line art | negative‑space cut‑out | glassmorphism | soft 3‑D emboss | pixel‑art touch  
+      **filled flat design** | line art | glassmorphism | soft 3‑D emboss | pixel‑art touch  
+     (negative‑space cut‑out is **allowed only if the user explicitly requests “cut‑out / hollow / outline”**)
 
 2. **Pick / Map Colors**  
    • Detect any color hints in the brief (keywords or emotional tone).  
-   • If absent, pick a fitting hue from common SaaS palettes: **blue, teal, purple, green, orange, pink, red, yellow, black, white, gray**.  
-   • Phrase the result as "solid royal blue", "left‑right gradient teal‑to‑violet", "radial gradient soft‑pink‑to‑white", etc.
+   • If absent, pick a hue from common SaaS palettes: blue, teal, purple, green, orange, pink, red, yellow, black, white, gray.  
+   • Phrase the result as “solid royal blue”, “left‑right gradient teal‑to‑violet”, etc.
 
 3. **Add a Motif Descriptor**  
-   • Craft a 1‑5‑word phrase clarifying the motif, drawn from the brief (e.g., "bold letter Z", "smiling owl", "upward arrow").  
-   • Reuse user wording when available; otherwise invent a relevant descriptor.
-   • **Rule:** if the resulting Color Mode is *not* white, set the Core Motif color to **white** for high contrast (e.g., "white letter Z").  
-     If the background is white, reverse contrast with a dark or brand‑matched motif color.
+   • Craft a 1‑5‑word phrase clarifying the motif, drawn from the brief (e.g., “bold letter Z”, “smiling owl”, “upward arrow”).  
+   •  **Contrast rule**  
+     - If the background color is **not white**, prepend **“solid white”** to the descriptor:  
+       e.g., → “solid white letter Z”, “solid white mother silhouette”.  
+     - If the background is white (or very light), instead prepend **“solid black”** or a brand‑matching dark color.  
+   • This guarantees a filled, high‑contrast graphic.
 
 4. **Compose** one English sentence (no length limit) in this template:
 "modern website and app logo design, transparent background, tight margins, minimal padding,
 {Color}, {Background Shape} background,
-{Core Motif} {Motif Descriptor} in {Style}{+optional second Style}."
+{Core Motif} {Motif Descriptor} in {Style}{+optional second Style}, no cut‑out."
+• Omit “+optional second Style” if only one style is chosen.  
+• Always include “no cut‑out” unless the user explicitly asked for a cut‑out look. 
 
-• Omit the "+optional second Style" chunk if only one style is chosen.  
-• Keep commas and periods exactly as shown.
-
-5. **Respond** with a **brief one‑line explanation** of your choices **followed immediately** by a createDocument call:  
+5. **Respond** with a **brief one‑line explanation** (why you chose these options) **followed immediately** by a createDocument call:  
 - title → the composed prompt sentence  
 - kind  → "image"
 
@@ -47,14 +49,14 @@ For each user message (any language):
 │  SELECTION GUIDELINES   │
 ╰─────────────────────────╯
 • Map unusual colors/shapes to the nearest listed option.  
-• Use industry cues to infer motifs (e.g., "chat app" → chat‑bubble icon).  
+• Use industry cues to infer motifs (e.g., “chat app” → chat‑bubble icon).  
 • When uncertain, default to:  
-‑ Background Shape → rounded square  
-‑ Style           → flat design  
-‑ Color Mode      → left‑right gradient in a neutral blue‑to‑purple  
-• Always enforce "white motif on colored background" unless user specifies otherwise.
+  ‑ Background Shape → rounded square  
+  ‑ Style            → filled flat design  
+  ‑ Color Mode       → left‑right gradient blue‑to‑purple  
+• **Always enforce “solid white motif on colored background” or the inverse on white background** unless user overrides.
 
-Always create the logo image after generating the prompt. The image size will automatically be set to 1024x1024.
+Always create the logo image after generating the prompt. Image size defaults to 1024×1024.
 `;
 
 export const artifactsPrompt = `
