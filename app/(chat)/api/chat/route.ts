@@ -21,8 +21,6 @@ import { generateUUID, getTrailingMessageId } from '@/lib/utils';
 import { generateTitleFromUserMessage } from '../../actions';
 import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
-import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
-import { getWeather } from '@/lib/ai/tools/get-weather';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
@@ -63,7 +61,7 @@ function getStreamContext() {
 
 export async function POST(request: Request) {
   // 📝 【日志】POST 请求开始
-  console.log('\n🚀 === POST /api/chat 请求开始 ===');
+  console.log('\n🚀 === POST /api/chat Logo生成请求开始 ===');
   console.log('⏰ 请求时间:', new Date().toISOString());
   console.log('🌐 请求来源:', request.headers.get('user-agent'));
   console.log('📍 请求URL:', request.url);
@@ -94,7 +92,7 @@ export async function POST(request: Request) {
     const { id, message, selectedChatModel, selectedVisibilityType } =
       requestBody;
 
-    console.log('📊 请求详情:', {
+    console.log('📊 Logo生成请求详情:', {
       chatId: id,
       messageId: message.id,
       messageRole: message.role,
@@ -243,8 +241,8 @@ export async function POST(request: Request) {
 
     const stream = createDataStream({
       execute: (dataStream) => {
-        // 📝 【日志】准备调用大模型进行文本生成
-        console.log('\n=== 🤖 AI 大模型调用开始 ===');
+        // 📝 【日志】准备调用Logo生成大模型
+        console.log('\n=== 🤖 AI Logo生成大模型调用开始 ===');
         console.log('📍 调用位置: app/(chat)/api/chat/route.ts:streamText()');
         console.log('⏰ 调用时间:', new Date().toISOString());
         console.log('👤 用户ID:', session.user?.id);
@@ -267,25 +265,18 @@ export async function POST(request: Request) {
             selectedChatModel === 'chat-model-reasoning'
               ? []
               : [
-                  'getWeather',
                   'createDocument',
                   'updateDocument',
-                  'requestSuggestions',
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_generateMessageId: generateUUID,
           tools: {
-            getWeather,
             createDocument: createDocument({ session, dataStream }),
             updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({
-              session,
-              dataStream,
-            }),
           },
           onFinish: async ({ response }) => {
             // 📝 【日志】AI响应完成
-            console.log('\n=== ✅ AI 响应完成 ===');
+            console.log('\n=== ✅ AI Logo生成响应完成 ===');
             console.log('⏰ 完成时间:', new Date().toISOString());
             console.log('📊 响应统计:', {
               messageCount: response.messages.length,
@@ -334,7 +325,7 @@ export async function POST(request: Request) {
                 console.error('❌ 保存AI响应失败:', error);
               }
             }
-            console.log('=== 🏁 AI 调用流程结束 ===\n');
+            console.log('=== 🏁 AI Logo生成调用流程结束 ===\n');
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
@@ -343,12 +334,12 @@ export async function POST(request: Request) {
         });
 
         // 📝 【日志】流式响应配置
-        console.log('🔄 流式响应配置:', {
+        console.log('🔄 Logo生成流式响应配置:', {
           chunking: 'word',
           sendReasoning: true,
           maxSteps: 5,
           activeTools: selectedChatModel === 'chat-model-reasoning' ? [] : [
-            'getWeather', 'createDocument', 'updateDocument', 'requestSuggestions'
+            'createDocument', 'updateDocument'
           ],
         });
 
@@ -377,17 +368,17 @@ export async function POST(request: Request) {
 
     if (streamContext) {
       console.log('✅ 使用可恢复流式响应');
-      console.log('🎉 === POST 请求处理完成，开始流式响应 ===\n');
+      console.log('🎉 === POST Logo生成请求处理完成，开始流式响应 ===\n');
       return new Response(
         await streamContext.resumableStream(streamId, () => stream),
       );
     } else {
       console.log('⚠️ 使用普通流式响应 (Redis不可用)');
-      console.log('🎉 === POST 请求处理完成，开始流式响应 ===\n');
+      console.log('🎉 === POST Logo生成请求处理完成，开始流式响应 ===\n');
       return new Response(stream);
     }
   } catch (error) {
-    console.error('\n❌ === POST 请求处理出错 ===');
+    console.error('\n❌ === POST Logo生成请求处理出错 ===');
     console.error('🕰️ 错误时间:', new Date().toISOString());
     console.error('💥 错误详情:', {
       message: error instanceof Error ? error.message : String(error),
@@ -401,16 +392,16 @@ export async function POST(request: Request) {
     }
 
     console.error('🚨 未处理的错误，返回通用错误响应');
-    console.error('=== POST 请求错误处理结束 ===\n');
+    console.error('=== POST Logo生成请求错误处理结束 ===\n');
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: '服务器内部错误，请稍后重试',
         details: error instanceof Error ? error.message : String(error)
-      }), 
-      { 
-        status: 500, 
-        headers: { 'Content-Type': 'application/json' } 
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
       }
     );
   }

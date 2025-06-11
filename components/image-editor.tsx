@@ -24,24 +24,43 @@ export function ImageEditor({
       })}
     >
       {status === 'streaming' ? (
-        <div className="flex flex-row gap-4 items-center">
+        <div className="flex flex-col gap-4 items-center">
           {!isInline && (
             <div className="animate-spin">
               <LoaderIcon />
             </div>
           )}
-          <div>Generating Image...</div>
+          <div className="text-center">
+            <h3 className="text-lg font-semibold mb-2">🎨 Generating Logo...</h3>
+            <p className="text-muted-foreground">
+              Creating professional logo designs based on your needs...
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Size: 1024x1024px
+            </p>
+          </div>
         </div>
       ) : (
-        <picture>
-          <img
-            className={cn('w-full h-fit max-w-[800px]', {
-              'p-0 md:p-20': !isInline,
-            })}
-            src={`data:image/png;base64,${content}`}
-            alt={title}
-          />
-        </picture>
+        <div className="flex flex-col items-center gap-4">
+          <picture>
+            <img
+              className={cn('w-full h-fit max-w-[800px] rounded-lg shadow-lg', {
+                'p-0 md:p-20': !isInline,
+              })}
+              src={`data:image/png;base64,${content}`}
+              alt={title}
+            />
+          </picture>
+          <div className="text-center">
+            <h3 className="text-lg font-semibold">✅ Logo generation completed</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              {title}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Size: 1024x1024px | Format: PNG
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
