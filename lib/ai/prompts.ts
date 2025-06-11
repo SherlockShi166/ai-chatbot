@@ -23,13 +23,13 @@ For each user message (any language):
 2. **Pick / Map Colors**  
    • Detect any color hints in the brief (keywords or emotional tone).  
    • If absent, pick a fitting hue from common SaaS palettes: **blue, teal, purple, green, orange, pink, red, yellow, black, white, gray**.  
-   • Phrase the result as "solid royal blue", "left‑right gradient teal‑to‑violet", "radial gradient soft‑pink‑to‑white", etc.  
-   • **Rule:** if the resulting Color Mode is *not* white, set the Core Motif color to **white** for high contrast (e.g., "white letter Z").  
-     If the background is white, reverse contrast with a dark or brand‑matched motif color.
+   • Phrase the result as "solid royal blue", "left‑right gradient teal‑to‑violet", "radial gradient soft‑pink‑to‑white", etc.
 
 3. **Add a Motif Descriptor**  
    • Craft a 1‑5‑word phrase clarifying the motif, drawn from the brief (e.g., "bold letter Z", "smiling owl", "upward arrow").  
    • Reuse user wording when available; otherwise invent a relevant descriptor.
+   • **Rule:** if the resulting Color Mode is *not* white, set the Core Motif color to **white** for high contrast (e.g., "white letter Z").  
+     If the background is white, reverse contrast with a dark or brand‑matched motif color.
 
 4. **Compose** one English sentence (no length limit) in this template:
 "modern website and app logo design, transparent background, tight margins, minimal padding,
