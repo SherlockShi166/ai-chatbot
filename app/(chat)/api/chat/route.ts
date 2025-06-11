@@ -267,6 +267,16 @@ export async function POST(request: Request) {
             0,
         });
 
+        // 📝 【日志】检查系统提示词中的Logo指令
+        const systemPromptContent = systemPrompt({ selectedChatModel, requestHints });
+        console.log("🎯 系统提示词配置:", {
+          hasLogoPrompt: systemPromptContent.includes('ChatLogo Prompt Composer'),
+          hasMandatoryRequirement: systemPromptContent.includes('CRITICAL REQUIREMENT'),
+          hasCreateDocumentTool: systemPromptContent.includes('createDocument'),
+          promptLength: systemPromptContent.length,
+          isReasoningModel: selectedChatModel === "chat-model-reasoning",
+        });
+
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
@@ -283,12 +293,65 @@ export async function POST(request: Request) {
             updateDocument: updateDocument({ session, dataStream }),
           },
           onFinish: async ({ response }) => {
-            // 📝 【日志】AI响应完成
-            console.log("\n=== ✅ AI Logo生成响应完成 ===");
+            // 📝 【日志】AI响应完成 - 详细分析parts数据
+            console.log("\n=== ✅ AI Logo生成响应完成 - 关键调试信息 ===");
             console.log("⏰ 完成时间:", new Date().toISOString());
             console.log("📊 响应统计:", {
               messageCount: response.messages.length,
-              response: response,
+            });
+
+            // 🔍 【关键调试】分析每条响应消息的parts
+            response.messages.forEach((msg: any, index: number) => {
+              if (msg.role === 'assistant') {
+                console.log(`\n🤖 助手消息 #${index}:`, {
+                  messageId: msg.id,
+                  partsCount: msg.parts?.length || 0,
+                });
+                
+                // 分析每个part
+                msg.parts?.forEach((part: any, partIndex: number) => {
+                  console.log(`  📋 Part #${partIndex}:`, {
+                    type: part.type,
+                    hasContent: !!part.content,
+                    contentPreview: typeof part.content === 'string' ? 
+                      part.content.slice(0, 50) + '...' : 
+                      typeof part.content,
+                  });
+                  
+                  // 🚨 【核心调试】检查工具调用相关的parts
+                  if (part.type === 'tool-invocation') {
+                    console.log(`    🛠️ 工具调用详情:`, {
+                      toolName: part.toolInvocation?.toolName,
+                      state: part.toolInvocation?.state,
+                      toolCallId: part.toolInvocation?.toolCallId,
+                      hasArgs: !!part.toolInvocation?.args,
+                      hasResult: !!part.toolInvocation?.result,
+                    });
+                    
+                    if (part.toolInvocation?.toolName === 'createDocument') {
+                      console.log(`    📝 CreateDocument工具调用:`, {
+                        state: part.toolInvocation.state,
+                        args: part.toolInvocation.args,
+                        result: part.toolInvocation.result,
+                      });
+                    }
+                  }
+                  
+                  if (part.type === 'text') {
+                    console.log(`    💬 文本内容:`, {
+                      textLength: part.text?.length || 0,
+                      textPreview: part.text?.slice(0, 100) + '...',
+                    });
+                    
+                    // 🚨 检查是否包含createDocument相关文本（说明工具未被调用）
+                    if (part.text?.includes('createDocument') || 
+                        part.text?.includes('IMMEDIATELY call createDocument')) {
+                      console.log(`    ⚠️ 警告: 发现工具调用提示文本，可能工具未被正确调用!`);
+                      console.log(`    🔍 问题文本:`, part.text);
+                    }
+                  }
+                });
+              }
             });
 
             if (session.user?.id) {

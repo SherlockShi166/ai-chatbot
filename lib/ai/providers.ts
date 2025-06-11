@@ -72,7 +72,7 @@ export const myProvider = isTestEnvironment
   //   languageModels: {
   //     "chat-model": openAI("gpt-4o-mini"),
   //     "chat-model-reasoning": wrapLanguageModel({
-  //       model: openAI("o1-mini"),
+  //       model: openAI("o4-mini"),
   //       middleware: extractReasoningMiddleware({ tagName: "think" }),
   //     }),
   //     "title-model": openAI("gpt-4o-mini"),
@@ -99,12 +99,12 @@ export const myProvider = isTestEnvironment
   //   },
   // });
 
-  // 5、openAI兼容写法 + 所罗门API ⇒ 可以生图
+  // 5、openAI兼容写法 + 钱多多API ⇒ 可以生图
   : customProvider({
       languageModels: {
         "chat-model": openAI("gpt-4o-mini"),
         "chat-model-reasoning": wrapLanguageModel({
-          model: openAI("o1-mini"),
+          model: openAI("o4-mini"),
           middleware: extractReasoningMiddleware({ tagName: "think" }),
         }),
         "title-model": openAI("gpt-4o-mini"),
