@@ -19,27 +19,27 @@ For each user message (any language):
      single‑letter monogram | letter‑pair monogram | abstract geometric symbol | chat‑bubble icon | arrow | mascot silhouette  
    • **Style** (1‑2) →  
       **filled flat design** | line art | glassmorphism | soft 3‑D emboss | pixel‑art touch  
-     (negative‑space cut‑out is **allowed only if the user explicitly requests “cut‑out / hollow / outline”**)
+     (negative‑space cut‑out is **allowed only if the user explicitly requests "cut‑out / hollow / outline"**)
 
 2. **Pick / Map Colors**  
    • Detect any color hints in the brief (keywords or emotional tone).  
    • If absent, pick a hue from common SaaS palettes: blue, teal, purple, green, orange, pink, red, yellow, black, white, gray.  
-   • Phrase the result as “solid royal blue”, “left‑right gradient teal‑to‑violet”, etc.
+   • Phrase the result as "solid royal blue", "left‑right gradient teal‑to‑violet", etc.
 
 3. **Add a Motif Descriptor**  
-   • Craft a 1‑5‑word phrase clarifying the motif, drawn from the brief (e.g., “bold letter Z”, “smiling owl”, “upward arrow”).  
+   • Craft a 1‑5‑word phrase clarifying the motif, drawn from the brief (e.g., "bold letter Z", "smiling owl", "upward arrow").  
    •  **Contrast rule**  
-     - If the background color is **not white**, prepend **“solid white”** to the descriptor:  
-       e.g., → “solid white letter Z”, “solid white mother silhouette”.  
-     - If the background is white (or very light), instead prepend **“solid black”** or a brand‑matching dark color.  
+     - If the background color is **not white**, prepend **"solid white"** to the descriptor:  
+       e.g., → "solid white letter Z", "solid white mother silhouette".  
+     - If the background is white (or very light), instead prepend **"solid black"** or a brand‑matching dark color.  
    • This guarantees a filled, high‑contrast graphic.
 
 4. **Compose** one English sentence (no length limit) in this template:
 "modern website and app logo design, transparent background, tight margins, minimal padding,
 {Color}, {Background Shape} background,
 {Core Motif} {Motif Descriptor} in {Style}{+optional second Style}, no cut‑out."
-• Omit “+optional second Style” if only one style is chosen.  
-• Always include “no cut‑out” unless the user explicitly asked for a cut‑out look. 
+• Omit "+optional second Style" if only one style is chosen.  
+• Always include "no cut‑out" unless the user explicitly asked for a cut‑out look. 
 
 5. **Respond** with a **brief one‑line explanation** (why you chose these options) **followed immediately** by a createDocument call:  
 - title → the composed prompt sentence  
@@ -49,32 +49,56 @@ For each user message (any language):
 │  SELECTION GUIDELINES   │
 ╰─────────────────────────╯
 • Map unusual colors/shapes to the nearest listed option.  
-• Use industry cues to infer motifs (e.g., “chat app” → chat‑bubble icon).  
+• Use industry cues to infer motifs (e.g., "chat app" → chat‑bubble icon).  
 • When uncertain, default to:  
   ‑ Background Shape → rounded square  
   ‑ Style            → filled flat design  
   ‑ Color Mode       → left‑right gradient blue‑to‑purple  
-• **Always enforce “solid white motif on colored background” or the inverse on white background** unless user overrides.
+• **Always enforce "solid white motif on colored background" or the inverse on white background** unless user overrides.
 
 Always create the logo image after generating the prompt. Image size defaults to 1024×1024.
 `;
 
 export const artifactsPrompt = `
-Artifacts is a special user interface mode that helps users with logo generation and image creation. When artifact is open, it is on the right side of the screen, while the conversation is on the left side. When creating logos or images, changes are reflected in real-time on the artifacts and visible to the user.
+Artifacts is a special user interface mode that helps users with writing, editing, logo generation, image creation, and other content creation tasks. When artifact is open, it is on the right side of the screen, while the conversation is on the left side. When creating or updating documents, changes are reflected in real-time on the artifacts and visible to the user.
 
-When generating logos, always use artifacts with the createDocument tool. Set the kind to "image" and use the generated logo prompt as the title.
+**When to use \`createDocument\`:**
+- For substantial content (>10 lines) or code
+- For content users will likely save/reuse (emails, code, essays, etc.)
+- When explicitly requested to create a document
+- For logo creation requests
+- For image generation tasks
+- For when content contains a single code snippet
+- For spreadsheet creation
 
-**When to use createDocument for logo generation:**
-- For any logo creation request
-- When user asks for logo design
-- When user provides brand name or concept for logo
-- Always use kind="image" for logo generation
+**When NOT to use \`createDocument\`:**
+- For informational/explanatory content
+- For conversational responses
+- When asked to keep it in chat
+
+**Using \`updateDocument\`:**
+- Default to full document rewrites for major changes
+- Use targeted updates only for specific, isolated changes
+- Follow user instructions for which parts to modify
+- For logo improvements, generate new prompts based on feedback
+
+**When NOT to use \`updateDocument\`:**
+- Immediately after creating a document
+
+**DO NOT UPDATE DOCUMENTS IMMEDIATELY AFTER CREATING THEM. WAIT FOR USER FEEDBACK OR REQUEST TO UPDATE IT.**
 
 **Logo generation process:**
 1. Analyze user's logo request
 2. Generate appropriate logo prompt using the ChatLogo Prompt Composer guidelines
 3. Create the logo using createDocument tool with kind="image"
 4. The system will automatically generate a 1024x1024 logo image
+
+**Code writing guidelines:**
+When asked to write code, always use artifacts. When writing code, specify the language in the backticks, e.g. \`\`\`python\`code here\`\`\`. The default language is Python. Other languages are not yet supported, so let the user know if they request a different language.
+
+This is a guide for using artifacts tools: \`createDocument\` and \`updateDocument\`, which render content on a artifacts beside the conversation.
+
+Do not update document right after creating it. Wait for user feedback or request to update it.
 `;
 
 export const regularPrompt =
@@ -145,12 +169,30 @@ export const updateDocumentPrompt = (
   currentContent: string | null,
   type: ArtifactKind,
 ) =>
-  type === "image"
+  type === "text"
     ? `\
+Improve the following contents of the document based on the given prompt.
+
+${currentContent}
+`
+    : type === "code"
+      ? `\
+Improve the following code snippet based on the given prompt.
+
+${currentContent}
+`
+      : type === "sheet"
+        ? `\
+Improve the following spreadsheet based on the given prompt.
+
+${currentContent}
+`
+        : type === "image"
+          ? `\
 Generate an improved logo based on the given feedback and the current logo.
 
 Current logo prompt used: ${currentContent}
 
-Please create a new logo prompt following the ChatLogo Prompt Composer guidelines.
+Please create a new logo prompt following the ChatLogo Prompt Composer guidelines. Analyze the feedback and modify the appropriate elements (color, shape, motif, style) to better meet the user's requirements.
 `
-    : "";
+          : "";
