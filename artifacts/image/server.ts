@@ -1,81 +1,289 @@
 import { myProvider } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
-import { experimental_generateImage } from "ai";
+
+// 定义 API 响应类型
+interface OpenAiImageResponse {
+  created: number;
+  data: Array<{
+    revised_prompt?: string;
+    b64_json: string;
+    url?: string;
+  }>;
+  usage?: {
+    total_tokens: number;
+    input_tokens: number;
+    output_tokens: number;
+    input_tokens_details?: {
+      text_tokens: number;
+    };
+  };
+}
+
+// 直接调用API生成图像
+async function generateImage({
+  prompt,
+  size = "1024x1024",
+}: {
+  prompt: string;
+  size?: string;
+}) {
+  // 验证输入参数
+  if (!prompt) {
+    throw new Error("图像生成提示词为空");
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY 环境变量未配置");
+  }
+
+  try {
+    // 调用API图像生成接口
+    const response = await fetch(
+      `${process.env.OPENAI_BASE_URL}images/generations`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: myProvider.imageModel("small-model").modelId,
+          prompt: prompt,
+          n: 1,
+          size: size,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API图像生成错误响应:", errorText);
+      throw new Error(
+        `API图像生成调用失败: ${response.status} ${response.statusText} - ${errorText}`,
+      );
+    }
+
+    const result: OpenAiImageResponse = await response.json();
+
+    // 验证响应数据
+    if (!result.data || result.data.length === 0 || !result.data[0].b64_json) {
+      throw new Error("API返回的图像数据格式不正确");
+    }
+
+    return {
+      image: {
+        base64: result.data[0].b64_json,
+      },
+      usage: result.usage,
+    };
+  } catch (error) {
+    console.error("generateImage 错误:", error);
+    throw error;
+  }
+}
+
+// 直接调用API编辑图像
+async function editImage({
+  originalImageBase64,
+  prompt,
+  size = "1024x1024",
+}: {
+  originalImageBase64: string;
+  prompt: string;
+  size?: string;
+}) {
+  // 验证输入参数
+  if (!originalImageBase64) {
+    throw new Error("原始图像数据为空");
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY 环境变量未配置");
+  }
+
+  try {
+    // 清理 base64 数据
+    const base64Data = originalImageBase64.replace(
+      /^data:image\/[a-z]+;base64,/,
+      "",
+    );
+
+    // 验证 base64 数据
+    if (!base64Data) {
+      throw new Error("无效的 base64 图像数据");
+    }
+
+    const binaryData = Buffer.from(base64Data, "base64");
+
+    // 检查图像大小（API 限制为 4MB）
+    if (binaryData.length > 4 * 1024 * 1024) {
+      throw new Error("图像文件过大，超过 4MB 限制");
+    }
+
+    // 创建 FormData
+    const formData = new FormData();
+    formData.append("model", myProvider.imageModel("small-model").modelId);
+    formData.append(
+      "image",
+      new Blob([binaryData], { type: "image/png" }),
+      "image.png",
+    );
+    formData.append("prompt", prompt);
+    formData.append("quality", "high");
+
+    // 调用API图像编辑接口
+    const response = await fetch(`${process.env.OPENAI_BASE_URL}images/edits`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API图像编辑错误响应:", errorText);
+      throw new Error(
+        `API图像编辑调用失败: ${response.status} ${response.statusText} - ${errorText}`,
+      );
+    }
+
+    const result: OpenAiImageResponse = await response.json();
+
+    // 验证响应数据
+    if (!result.data || result.data.length === 0 || !result.data[0].b64_json) {
+      throw new Error("API返回的图像编辑数据格式不正确");
+    }
+
+    return {
+      image: {
+        base64: result.data[0].b64_json,
+      },
+      usage: result.usage,
+    };
+  } catch (error) {
+    console.error("editImageWithQianDuoDuo 错误:", error);
+    throw error;
+  }
+}
 
 export const imageDocumentHandler = createDocumentHandler<"image">({
   kind: "image",
   onCreateDocument: async ({ title, dataStream }) => {
     let draftContent = "";
 
-    // 📝 【日志】准备调用Logo图像生成模型
-    console.log("\n=== 🎨 AI Logo 图像生成调用开始 ===");
+    // 📝 【日志】准备调用图像生成API
+    console.log("\n=== 🎨  API 图像生成调用开始 ===");
     console.log("📍 调用位置: artifacts/image/server.ts:onCreateDocument()");
     console.log("⏰ 调用时间:", new Date().toISOString());
-    console.log("🎯 图像模型: small-model");
+    console.log("🎯 使用接口:  /images/generations");
+    console.log(`🎯 图像模型: ${myProvider.imageModel("small-model").modelId}`);
     console.log("📝 Logo生成提示词:", title);
     console.log("🔢 生成数量: 1");
     console.log("📐 图像尺寸: 1024x1024");
 
-    const { image } = await experimental_generateImage({
-      model: myProvider.imageModel("small-model"),
-      prompt: title,
-      n: 1,
-      size: "1024x1024",
-    });
+    try {
+      const { image, usage } = await generateImage({
+        prompt: title,
+        size: "1024x1024",
+      });
 
-    // 📝 【日志】Logo图像生成完成
-    console.log("\n=== ✅ Logo图像生成完成 ===");
-    console.log("⏰ 完成时间:", new Date().toISOString());
-    console.log("📏 图像大小:", {
-      base64Length: image.base64.length,
-      estimatedSizeKB: Math.round((image.base64.length * 0.75) / 1024),
-    });
-    console.log("=== 🏁 Logo图像生成流程结束 ===\n");
+      // 📝 【日志】图像生成完成
+      console.log("\n=== ✅ 图像生成完成 ===");
+      console.log("⏰ 完成时间:", new Date().toISOString());
+      console.log("📏 图像大小:", {
+        base64Length: image.base64.length,
+        estimatedSizeKB: Math.round((image.base64.length * 0.75) / 1024),
+      });
+      console.log("📊 Token使用统计:", usage);
+      console.log("=== 🏁 图像生成流程结束 ===\n");
 
-    draftContent = image.base64;
+      draftContent = image.base64;
 
-    dataStream.writeData({
-      type: "image-delta",
-      content: image.base64,
-    });
+      dataStream.writeData({
+        type: "image-delta",
+        content: image.base64,
+      });
 
-    return draftContent;
+      return draftContent;
+    } catch (error) {
+      console.error("❌ 图像生成失败:", error);
+      throw error;
+    }
   },
-  onUpdateDocument: async ({ description, dataStream }) => {
+  onUpdateDocument: async ({ document, description, dataStream }) => {
     let draftContent = "";
 
-    // 📝 【日志】准备调用Logo图像更新生成
-    console.log("\n=== 🎨 AI Logo图像更新生成调用开始 ===");
+    // 📝 【日志】准备调用图像编辑API
+    console.log("\n=== 🖌️  API 图像编辑调用开始 ===");
     console.log("📍 调用位置: artifacts/image/server.ts:onUpdateDocument()");
     console.log("⏰ 调用时间:", new Date().toISOString());
-    console.log("🎯 图像模型: small-model");
-    console.log("📝 更新描述:", description);
-    console.log("🔢 生成数量: 1");
+    console.log("🎯 使用接口:  /images/edits");
+    console.log(`🎯 图像模型: ${myProvider.imageModel("small-model").modelId}`);
+    console.log("📝 编辑描述:", description);
     console.log("📐 图像尺寸: 1024x1024");
+    console.log("🖼️ 原始图像存在:", !!document.content);
+    console.log("🖼️ 原始图像大小:", document.content?.length || 0);
 
-    const { image } = await experimental_generateImage({
-      model: myProvider.imageModel("small-model"),
-      prompt: description,
-      n: 1,
-      size: "1024x1024",
-    });
+    try {
+      // 检查是否有原始图像数据
+      if (!document.content) {
+        throw new Error("没有原始图像数据，无法进行编辑");
+      }
 
-    // 📝 【日志】Logo图像更新生成完成
-    console.log("\n=== ✅ Logo图像更新生成完成 ===");
-    console.log("⏰ 完成时间:", new Date().toISOString());
-    console.log("📏 图像大小:", {
-      base64Length: image.base64.length,
-      estimatedSizeKB: Math.round((image.base64.length * 0.75) / 1024),
-    });
-    console.log("=== 🏁 Logo图像更新生成流程结束 ===\n");
+      // 使用 /images/edits API
+      const { image, usage } = await editImage({
+        originalImageBase64: document.content,
+        prompt: description,
+        size: "1024x1024",
+      });
 
-    draftContent = image.base64;
+      // 📝 【日志】图像编辑完成
+      console.log("\n=== ✅ 图像编辑完成 ===");
+      console.log("⏰ 完成时间:", new Date().toISOString());
+      console.log("📏 编辑后图像大小:", {
+        base64Length: image.base64.length,
+        estimatedSizeKB: Math.round((image.base64.length * 0.75) / 1024),
+      });
+      console.log("📊 Token使用统计:", usage);
+      console.log("=== 🏁 图像编辑流程结束 ===\n");
 
-    dataStream.writeData({
-      type: "image-delta",
-      content: image.base64,
-    });
+      draftContent = image.base64;
 
-    return draftContent;
+      dataStream.writeData({
+        type: "image-delta",
+        content: image.base64,
+      });
+
+      return draftContent;
+    } catch (error) {
+      console.error("❌ 图像编辑失败:", error);
+
+      // 如果编辑失败，回退到生成新图像
+      console.log("🔄 回退到图像生成模式...");
+      console.log("📝 使用描述重新生成图像:", description);
+
+      try {
+        const { image, usage } = await generateImage({
+          prompt: description,
+          size: "1024x1024",
+        });
+
+        console.log("✅ 回退生成完成");
+        console.log("📊 回退生成Token使用:", usage);
+
+        draftContent = image.base64;
+
+        dataStream.writeData({
+          type: "image-delta",
+          content: image.base64,
+        });
+
+        return draftContent;
+      } catch (fallbackError) {
+        console.error("❌ 回退图像生成也失败:", fallbackError);
+        throw fallbackError;
+      }
+    }
   },
 });
