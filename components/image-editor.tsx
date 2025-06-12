@@ -25,19 +25,26 @@ export function ImageEditor({
     >
       {status === "streaming" ? (
         <div className="flex flex-col gap-4 items-center">
-          {!isInline && (
-            <div className="animate-spin">
-              <LoaderIcon />
-            </div>
-          )}
+          <div className="animate-spin">
+            <LoaderIcon />
+          </div>
           <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2">
+            <h3 className={cn("font-semibold mb-2", {
+              "text-lg": !isInline,
+              "text-base": isInline,
+            })}>
               🎨 Generating Logo...
             </h3>
-            <p className="text-muted-foreground">
+            <p className={cn("text-muted-foreground", {
+              "text-base": !isInline,
+              "text-sm": isInline,
+            })}>
               Creating professional logo designs based on your needs...
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className={cn("text-muted-foreground mt-2", {
+              "text-sm": !isInline,
+              "text-xs": isInline,
+            })}>
               Size: 1024x1024px
             </p>
           </div>

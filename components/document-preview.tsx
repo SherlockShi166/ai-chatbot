@@ -26,12 +26,14 @@ interface DocumentPreviewProps {
   isReadonly: boolean;
   result?: any;
   args?: any;
+  type?: 'create' | 'update' | 'request-suggestions';
 }
 
 export function DocumentPreview({
   isReadonly,
   result,
   args,
+  type = 'create',
 }: DocumentPreviewProps) {
   const { artifact, setArtifact } = useArtifact();
 
@@ -62,7 +64,7 @@ export function DocumentPreview({
     if (result) {
       return (
         <DocumentToolResult
-          type="create"
+          type={type}
           result={{ id: result.id, title: result.title, kind: result.kind }}
           isReadonly={isReadonly}
         />
@@ -72,7 +74,7 @@ export function DocumentPreview({
     if (args) {
       return (
         <DocumentToolCall
-          type="create"
+          type={type}
           args={{ title: args.title }}
           isReadonly={isReadonly}
         />
@@ -81,7 +83,7 @@ export function DocumentPreview({
   }
 
   if (isDocumentsFetching) {
-    return <LoadingSkeleton artifactKind={result.kind ?? args.kind} />;
+    return <LoadingSkeleton artifactKind={result?.kind ?? args?.kind} />;
   }
 
   const document: Document | null = previewDocument
