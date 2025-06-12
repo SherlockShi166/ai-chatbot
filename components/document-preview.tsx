@@ -111,7 +111,7 @@ export function DocumentPreview({
       <DocumentHeader
         title={document.title}
         kind={document.kind}
-        isStreaming={artifact.status === 'streaming'}
+        isStreaming={artifact.status === 'streaming' && artifact.documentId === document.id}
       />
       <DocumentContent document={document} />
     </div>
@@ -247,11 +247,16 @@ const DocumentContent = ({ document }: { document: Document }) => {
     },
   );
 
+  const documentStatus: 'streaming' | 'idle' = 
+    artifact.status === 'streaming' && artifact.documentId === document.id
+      ? 'streaming' 
+      : 'idle';
+
   const commonProps = {
     content: document.content ?? '',
     isCurrentVersion: true,
     currentVersionIndex: 0,
-    status: artifact.status,
+    status: documentStatus,
     saveContent: () => {},
     suggestions: [],
   };
@@ -278,7 +283,7 @@ const DocumentContent = ({ document }: { document: Document }) => {
           content={document.content ?? ''}
           isCurrentVersion={true}
           currentVersionIndex={0}
-          status={artifact.status}
+          status={documentStatus}
           isInline={true}
         />
       ) : null}
