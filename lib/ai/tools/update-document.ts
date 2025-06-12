@@ -1,8 +1,9 @@
 import { DataStreamWriter, tool } from 'ai';
 import { Session } from 'next-auth';
 import { z } from 'zod';
-import { getDocumentById, saveDocument } from '@/lib/db/queries';
+import { getDocumentById } from '@/lib/db/queries';
 import { documentHandlersByArtifactKind } from '@/lib/artifacts/server';
+import { generateUUID } from '@/lib/utils';
 
 interface UpdateDocumentProps {
   session: Session;
@@ -72,9 +73,22 @@ export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
           hasOnUpdateDocument: typeof documentHandler.onUpdateDocument === 'function',
         });
 
+        // 🆔 生成新的文档ID，让每次更新都创建独立的文档
+        const newDocumentId = generateUUID();
+        console.log('🆔 生成新文档ID:', newDocumentId);
+
+        console.log('📤 发送新文档ID数据流...');
+        dataStream.writeData({
+          type: 'id',
+          content: newDocumentId,
+        });
+
         console.log('🔧 执行文档更新处理器...');
         await documentHandler.onUpdateDocument({
-          document,
+          document: {
+            ...document,
+            id: newDocumentId, // 使用新ID
+          },
           description,
           dataStream,
           session,
@@ -84,14 +98,15 @@ export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
         dataStream.writeData({ type: 'finish', content: '' });
 
         const result = {
-          id,
+          id: newDocumentId, // 返回新ID
           title: document.title,
           kind: document.kind,
           content: 'The document has been updated successfully.',
         };
 
         console.log('✅ 文档更新成功:', {
-          documentId: id,
+          originalDocumentId: id,
+          newDocumentId,
           title: document.title,
           kind: document.kind,
           contentMessage: result.content,
