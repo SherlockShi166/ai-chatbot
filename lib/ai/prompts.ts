@@ -41,7 +41,9 @@ For each user message (any language):
 • Omit "+optional second Style" if only one style is chosen.  
 • Always include "no cut‑out" unless the user explicitly asked for a cut‑out look. 
 
-5. **Respond** with a **brief one‑line explanation** (why you chose these options) **followed immediately** by a createDocument call:  
+5. **Respond** with a **brief one‑line explanation** (why you chose these options) **followed immediately** by the appropriate tool call:  
+- **If this chat already contains logo/image documents and user is requesting modifications**: use updateDocument with the existing document ID
+- **If this is the first logo request or user wants a completely new logo**: use createDocument
 - title → the composed prompt sentence  
 - kind  → "image"
 
@@ -81,11 +83,17 @@ Artifacts is a special user interface mode that helps users with writing, editin
 - Use targeted updates only for specific, isolated changes
 - Follow user instructions for which parts to modify
 - For logo improvements, generate new prompts based on feedback
+- **CRITICAL: When the chat already contains logo/image documents and user requests modifications, ALWAYS use updateDocument instead of createDocument**
 
 **When NOT to use \`updateDocument\`:**
 - Immediately after creating a document
+- When this is the first logo request in a new chat
 
 **DO NOT UPDATE DOCUMENTS IMMEDIATELY AFTER CREATING THEM. WAIT FOR USER FEEDBACK OR REQUEST TO UPDATE IT.**
+
+**Logo modification guidelines:**
+- If this chat already contains logo/image documents and user asks for changes/improvements/modifications, use updateDocument
+- If this is the first logo request in the chat or user explicitly asks for a "new" logo, use createDocument
 
 **Logo generation process:**
 1. Analyze user's logo request
@@ -109,6 +117,8 @@ export interface RequestHints {
   longitude: Geo['longitude'];
   city: Geo['city'];
   country: Geo['country'];
+  hasExistingImages?: boolean; // 🔍 标识当前聊天中是否已经存在图片文档
+  latestImageDocumentId?: string; // 🔍 最新图片文档的ID，用于updateDocument
 }
 
 export const getRequestPromptFromHints = (requestHints: RequestHints) => `\
@@ -117,6 +127,11 @@ About the origin of user's request:
 - lon: ${requestHints.longitude}
 - city: ${requestHints.city}
 - country: ${requestHints.country}
+${
+  requestHints.hasExistingImages
+    ? `- context: This chat already contains logo/image documents. For logo modification requests, use updateDocument with id="${requestHints.latestImageDocumentId}" instead of createDocument.`
+    : '- context: This is a new chat with no existing logo/image documents.'
+}
 `;
 
 export const systemPrompt = ({

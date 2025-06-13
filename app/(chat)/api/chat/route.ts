@@ -202,6 +202,46 @@ export async function POST(request: Request) {
         : null,
     });
 
+    // 🔍 【新增功能】检查历史消息中是否已经存在图片文档，并获取最新的文档ID
+    console.log('🔍 检查历史消息中的图片文档...');
+    let hasExistingImages = false;
+    let latestImageDocumentId: string | undefined;
+
+    // 从最新消息开始倒序查找
+    for (let i = previousMessages.length - 1; i >= 0; i--) {
+      const msg = previousMessages[i];
+      if (msg.role === 'assistant' && msg.parts) {
+        try {
+          const parts = Array.isArray(msg.parts) ? msg.parts : JSON.parse(msg.parts as string);
+          const imagePart = parts.find((part: any) => 
+            part.type === 'tool-invocation' &&
+            (part.toolInvocation?.toolName === 'createDocument' || part.toolInvocation?.toolName === 'updateDocument') &&
+            part.toolInvocation?.args?.kind === 'image' &&
+            part.toolInvocation?.result?.id
+          );
+          
+          if (imagePart) {
+            hasExistingImages = true;
+            latestImageDocumentId = imagePart.toolInvocation.result.id;
+            console.log('🎯 找到最新图片文档:', {
+              documentId: latestImageDocumentId,
+              toolName: imagePart.toolInvocation.toolName,
+              messageIndex: i,
+            });
+            break; // 找到最新的就停止
+          }
+        } catch (error) {
+          console.error('解析消息parts出错:', error);
+        }
+      }
+    }
+
+    console.log('📊 图片文档检查结果:', {
+      hasExistingImages,
+      latestImageDocumentId,
+      totalMessages: previousMessages.length,
+    });
+
     const messages = appendClientMessage({
       // @ts-expect-error: todo add type conversion from DBMessage[] to UIMessage[]
       messages: previousMessages,
@@ -217,6 +257,8 @@ export async function POST(request: Request) {
       latitude,
       city,
       country,
+      hasExistingImages, // 🔍 传递图片文档存在信息
+      latestImageDocumentId, // 🔍 传递最新图片文档ID
     };
 
     console.log('🌍 地理位置信息:', requestHints);
