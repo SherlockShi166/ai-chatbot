@@ -9,6 +9,7 @@ import {
   gt,
   gte,
   inArray,
+  isNull,
   lt,
   type SQL,
 } from 'drizzle-orm';
@@ -16,17 +17,17 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
 import {
-  user,
   chat,
-  type User,
+  type Chat,
+  type DBMessage,
   document,
+  message,
+  stream,
   type Suggestion,
   suggestion,
-  message,
+  user,
+  type User,
   vote,
-  type DBMessage,
-  type Chat,
-  stream,
 } from './schema';
 import type { ArtifactKind } from '@/components/artifact';
 import { generateUUID } from '../utils';
@@ -291,7 +292,15 @@ export async function saveDocument({
   userId: string;
 }) {
   try {
-    return await db
+    console.log('📄 saveDocument 调用:', {
+      id,
+      title: title.substring(0, 50) + (title.length > 50 ? '...' : ''),
+      kind,
+      contentLength: content?.length || 0,
+      userId,
+    });
+
+    const result = await db
       .insert(document)
       .values({
         id,
@@ -302,8 +311,56 @@ export async function saveDocument({
         createdAt: new Date(),
       })
       .returning();
+
+    console.log('✅ 文档保存成功:', { documentId: id });
+    return result;
   } catch (error) {
+    console.error('❌ saveDocument 失败:', {
+      error: error instanceof Error ? error.message : String(error),
+      documentId: id,
+    });
     throw new ChatSDKError('bad_request:database', 'Failed to save document');
+  }
+}
+
+export async function updateDocumentMessageId({
+  documentId,
+  messageId,
+}: {
+  documentId: string;
+  messageId: string;
+}) {
+  try {
+    console.log('🔄 更新Document的messageId:', { documentId, messageId });
+
+    const result = await db
+      .update(document)
+      .set({ messageId })
+      .where(
+        and(
+          eq(document.id, documentId),
+          isNull(document.messageId), // 只更新messageId为null的记录，避免重复更新
+        ),
+      )
+      .returning();
+
+    console.log('✅ Document messageId 更新成功:', {
+      updatedCount: result.length,
+      documentId,
+      messageId,
+    });
+
+    return result;
+  } catch (error) {
+    console.error('❌ 更新Document messageId失败:', {
+      error: error instanceof Error ? error.message : String(error),
+      documentId,
+      messageId,
+    });
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to update document messageId',
+    );
   }
 }
 

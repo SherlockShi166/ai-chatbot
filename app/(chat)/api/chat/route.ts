@@ -16,6 +16,7 @@ import {
   getStreamIdsByChatId,
   saveChat,
   saveMessages,
+  updateDocumentMessageId,
 } from '@/lib/db/queries';
 import { generateUUID, getTrailingMessageId } from '@/lib/utils';
 import { generateTitleFromUserMessage } from '../../actions';
@@ -300,10 +301,8 @@ export async function POST(request: Request) {
             updateDocument: updateDocument({ session, dataStream }),
           },
           onFinish: async ({ response }) => {
-            // 📝 【日志】AI响应完成 - 详细分析parts数据
-            console.log('\n=== ✅ AI Logo生成响应完成 - 关键调试信息 ===');
-            console.log('⏰ 完成时间:', new Date().toISOString());
-            console.log('📊 响应统计:', {
+            console.log('🏁 AI响应流程完成');
+            console.log('📊 完成统计:', {
               messageCount: response.messages.length,
             });
 
@@ -405,6 +404,56 @@ export async function POST(request: Request) {
                 });
 
                 console.log('✅ AI响应保存成功');
+
+                // 🔄 从 AI 响应中提取文档 ID 并更新 messageId
+                console.log('🔍 查找需要更新的文档ID...');
+                const documentIds: string[] = [];
+
+                // 遍历 AI 消息的 parts，查找 createDocument/updateDocument 工具调用
+                // 这边虽然是遍历出来一个documentIds列表，但是实际一条message只会有一次工具调用
+                assistantMessage.parts?.forEach((part: any) => {
+                  if (
+                    part.type === 'tool-invocation' &&
+                    (part.toolInvocation?.toolName === 'createDocument' ||
+                      part.toolInvocation?.toolName === 'updateDocument') &&
+                    part.toolInvocation?.state === 'result' &&
+                    part.toolInvocation?.result?.id
+                  ) {
+                    documentIds.push(part.toolInvocation.result.id);
+                    console.log(
+                      '🎯 找到文档ID:',
+                      part.toolInvocation.result.id,
+                    );
+                  }
+                });
+
+                if (documentIds.length > 0) {
+                  console.log('🔄 更新Document表的messageId...', {
+                    documentIds,
+                    assistantId,
+                  });
+
+                  // 更新每个找到的文档
+                  for (const documentId of documentIds) {
+                    try {
+                      await updateDocumentMessageId({
+                        documentId,
+                        messageId: assistantId,
+                      });
+                      console.log('✅ Document messageId 更新完成:', {
+                        documentId,
+                      });
+                    } catch (error) {
+                      console.error('❌ Document messageId 更新失败:', {
+                        documentId,
+                        error,
+                      });
+                      // 这里不抛出错误，因为文档已经创建成功，只是关联失败
+                    }
+                  }
+                } else {
+                  console.log('ℹ️ 未找到需要更新的文档');
+                }
               } catch (error) {
                 console.error('❌ 保存AI响应失败:', error);
               }
