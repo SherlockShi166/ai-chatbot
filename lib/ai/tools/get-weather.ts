@@ -24,7 +24,7 @@ export const getWeather = tool({
       console.log('🔗 API URL:', apiUrl);
 
       const response = await fetch(apiUrl);
-      
+
       console.log('📡 API响应状态:', {
         status: response.status,
         statusText: response.statusText,
@@ -32,19 +32,21 @@ export const getWeather = tool({
       });
 
       if (!response.ok) {
-        throw new Error(`天气API请求失败: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `天气API请求失败: ${response.status} ${response.statusText}`,
+        );
       }
 
       const weatherData = await response.json();
-      
+
       console.log('✅ 天气数据获取成功:', {
         temperature: weatherData.current?.temperature_2m,
         timezone: weatherData.timezone,
         dataKeys: Object.keys(weatherData),
       });
-      
+
       console.log('=== 🏁 天气查询工具调用结束 ===\n');
-      
+
       return weatherData;
     } catch (error) {
       console.error('\n❌ 天气查询工具调用失败:', {

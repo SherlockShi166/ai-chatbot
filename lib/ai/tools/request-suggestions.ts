@@ -35,10 +35,10 @@ export const requestSuggestions = ({
         const document = await getDocumentById({ id: documentId });
 
         if (!document || !document.content) {
-          console.error('❌ 文档未找到或内容为空:', { 
-            documentId, 
+          console.error('❌ 文档未找到或内容为空:', {
+            documentId,
             hasDocument: !!document,
-            hasContent: !!document?.content 
+            hasContent: !!document?.content,
           });
           return {
             error: 'Document not found',
@@ -58,7 +58,9 @@ export const requestSuggestions = ({
         > = [];
 
         console.log('🤖 开始AI建议生成...');
-        console.log('📍 AI调用位置: lib/ai/tools/request-suggestions.ts:streamObject()');
+        console.log(
+          '📍 AI调用位置: lib/ai/tools/request-suggestions.ts:streamObject()',
+        );
         console.log('🎯 AI模型: artifact-model');
         console.log('📝 文档内容长度:', document.content.length);
 
@@ -71,7 +73,9 @@ export const requestSuggestions = ({
           schema: z.object({
             originalSentence: z.string().describe('The original sentence'),
             suggestedSentence: z.string().describe('The suggested sentence'),
-            description: z.string().describe('The description of the suggestion'),
+            description: z
+              .string()
+              .describe('The description of the suggestion'),
           }),
         });
 
@@ -97,7 +101,8 @@ export const requestSuggestions = ({
 
           console.log('📤 发送建议数据流:', {
             suggestionId: suggestion.id,
-            originalTextPreview: suggestion.originalText?.substring(0, 50) + '...',
+            originalTextPreview:
+              suggestion.originalText?.substring(0, 50) + '...',
           });
 
           dataStream.writeData({
@@ -147,9 +152,9 @@ export const requestSuggestions = ({
           suggestionsCount: suggestions.length,
           message: result.message,
         });
-        
+
         console.log('=== 🏁 建议请求工具调用结束 ===\n');
-        
+
         return result;
       } catch (error) {
         console.error('\n❌ 建议请求工具调用失败:', {

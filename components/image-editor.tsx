@@ -1,5 +1,5 @@
-import { LoaderIcon } from "./icons";
-import cn from "classnames";
+import { LoaderIcon } from './icons';
+import cn from 'classnames';
 
 interface ImageEditorProps {
   title: string;
@@ -18,33 +18,39 @@ export function ImageEditor({
 }: ImageEditorProps) {
   return (
     <div
-      className={cn("flex flex-row items-center justify-center w-full", {
-        "h-[calc(100dvh-60px)]": !isInline,
-        "h-[200px]": isInline,
+      className={cn('flex flex-row items-center justify-center w-full', {
+        'h-[calc(100dvh-60px)]': !isInline,
+        'h-[200px]': isInline,
       })}
     >
-      {status === "streaming" ? (
+      {status === 'streaming' ? (
         <div className="flex flex-col gap-4 items-center">
           <div className="animate-spin">
             <LoaderIcon />
           </div>
           <div className="text-center">
-            <h3 className={cn("font-semibold mb-2", {
-              "text-lg": !isInline,
-              "text-base": isInline,
-            })}>
+            <h3
+              className={cn('font-semibold mb-2', {
+                'text-lg': !isInline,
+                'text-base': isInline,
+              })}
+            >
               🎨 Generating Logo...
             </h3>
-            <p className={cn("text-muted-foreground", {
-              "text-base": !isInline,
-              "text-sm": isInline,
-            })}>
+            <p
+              className={cn('text-muted-foreground', {
+                'text-base': !isInline,
+                'text-sm': isInline,
+              })}
+            >
               Creating professional logo designs based on your needs...
             </p>
-            <p className={cn("text-muted-foreground mt-2", {
-              "text-sm": !isInline,
-              "text-xs": isInline,
-            })}>
+            <p
+              className={cn('text-muted-foreground mt-2', {
+                'text-sm': !isInline,
+                'text-xs': isInline,
+              })}
+            >
               Size: 1024x1024px
             </p>
           </div>
@@ -53,8 +59,8 @@ export function ImageEditor({
         <div className="flex flex-col items-center gap-4">
           <picture>
             <img
-              className={cn("w-full h-fit max-w-[800px] rounded-lg shadow-lg", {
-                "p-0 md:p-20": !isInline,
+              className={cn('w-full h-fit max-w-[800px] rounded-lg shadow-lg', {
+                'p-0 md:p-20': !isInline,
               })}
               src={`data:image/png;base64,${content}`}
               alt={title}

@@ -65,12 +65,15 @@ export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
 
         if (!documentHandler) {
           console.error('❌ 未找到文档处理器:', { kind: document.kind });
-          throw new Error(`No document handler found for kind: ${document.kind}`);
+          throw new Error(
+            `No document handler found for kind: ${document.kind}`,
+          );
         }
 
         console.log('✅ 找到文档处理器:', {
           handlerKind: documentHandler.kind,
-          hasOnUpdateDocument: typeof documentHandler.onUpdateDocument === 'function',
+          hasOnUpdateDocument:
+            typeof documentHandler.onUpdateDocument === 'function',
         });
 
         // 🆔 生成新的文档ID，让每次更新都创建独立的文档
@@ -111,9 +114,9 @@ export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
           kind: document.kind,
           contentMessage: result.content,
         });
-        
+
         console.log('=== 🏁 文档更新工具调用结束 ===\n');
-        
+
         return result;
       } catch (error) {
         console.error('\n❌ 文档更新工具调用失败:', {

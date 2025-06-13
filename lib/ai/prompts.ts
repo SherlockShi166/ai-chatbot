@@ -1,5 +1,5 @@
-import type { ArtifactKind } from "@/components/artifact";
-import type { Geo } from "@vercel/functions";
+import type { ArtifactKind } from '@/components/artifact';
+import type { Geo } from '@vercel/functions';
 
 export const logoPrompt = `
 You are **ChatLogo Prompt Composer**, an expert at turning any free‑form logo request into a crisp, English‑only image‑generation prompt.
@@ -102,13 +102,13 @@ Do not update document right after creating it. Wait for user feedback or reques
 `;
 
 export const regularPrompt =
-  "You are a friendly assistant! Keep your responses concise and helpful.";
+  'You are a friendly assistant! Keep your responses concise and helpful.';
 
 export interface RequestHints {
-  latitude: Geo["latitude"];
-  longitude: Geo["longitude"];
-  city: Geo["city"];
-  country: Geo["country"];
+  latitude: Geo['latitude'];
+  longitude: Geo['longitude'];
+  city: Geo['city'];
+  country: Geo['country'];
 }
 
 export const getRequestPromptFromHints = (requestHints: RequestHints) => `\
@@ -128,7 +128,7 @@ export const systemPrompt = ({
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
 
-  if (selectedChatModel === "chat-model-reasoning") {
+  if (selectedChatModel === 'chat-model-reasoning') {
     return `${logoPrompt}\n\n${requestPrompt}`;
   } else {
     return `${logoPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
@@ -169,25 +169,25 @@ export const updateDocumentPrompt = (
   currentContent: string | null,
   type: ArtifactKind,
 ) =>
-  type === "text"
+  type === 'text'
     ? `\
 Improve the following contents of the document based on the given prompt.
 
 ${currentContent}
 `
-    : type === "code"
+    : type === 'code'
       ? `\
 Improve the following code snippet based on the given prompt.
 
 ${currentContent}
 `
-      : type === "sheet"
+      : type === 'sheet'
         ? `\
 Improve the following spreadsheet based on the given prompt.
 
 ${currentContent}
 `
-        : type === "image"
+        : type === 'image'
           ? `\
 Generate an improved logo based on the given feedback and the current logo.
 
@@ -195,4 +195,4 @@ Current logo prompt used: ${currentContent}
 
 Please create a new logo prompt following the ChatLogo Prompt Composer guidelines. Analyze the feedback and modify the appropriate elements (color, shape, motif, style) to better meet the user's requirements.
 `
-          : "";
+          : '';

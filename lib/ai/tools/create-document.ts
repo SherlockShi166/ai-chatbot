@@ -18,7 +18,11 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
       'Create a document for writing, coding, or image generation activities. Use kind="image" for image generation requests. This tool will call other functions that will generate the contents based on the title and kind.',
     parameters: z.object({
       title: z.string().describe('Document title or image generation prompt'),
-      kind: z.enum(artifactKinds).describe('Document type: text, code, image, or sheet. Use "image" for generating images.'),
+      kind: z
+        .enum(artifactKinds)
+        .describe(
+          'Document type: text, code, image, or sheet. Use "image" for generating images.',
+        ),
     }),
     execute: async ({ title, kind }) => {
       // 📝 【日志】文档创建工具调用开始
@@ -73,7 +77,8 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
 
         console.log('✅ 找到文档处理器:', {
           handlerKind: documentHandler.kind,
-          hasOnCreateDocument: typeof documentHandler.onCreateDocument === 'function',
+          hasOnCreateDocument:
+            typeof documentHandler.onCreateDocument === 'function',
         });
 
         console.log('🔧 执行文档创建处理器...');
@@ -100,9 +105,9 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
           kind,
           contentMessage: result.content,
         });
-        
+
         console.log('=== 🏁 文档创建工具调用结束 ===\n');
-        
+
         return result;
       } catch (error) {
         console.error('\n❌ 文档创建工具调用失败:', {

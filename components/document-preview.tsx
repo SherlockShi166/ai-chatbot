@@ -111,7 +111,9 @@ export function DocumentPreview({
       <DocumentHeader
         title={document.title}
         kind={document.kind}
-        isStreaming={artifact.status === 'streaming' && artifact.documentId === document.id}
+        isStreaming={
+          artifact.status === 'streaming' && artifact.documentId === document.id
+        }
       />
       <DocumentContent document={document} />
     </div>
@@ -247,9 +249,9 @@ const DocumentContent = ({ document }: { document: Document }) => {
     },
   );
 
-  const documentStatus: 'streaming' | 'idle' = 
+  const documentStatus: 'streaming' | 'idle' =
     artifact.status === 'streaming' && artifact.documentId === document.id
-      ? 'streaming' 
+      ? 'streaming'
       : 'idle';
 
   const commonProps = {
