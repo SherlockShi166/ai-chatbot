@@ -4,14 +4,14 @@ import type { Attachment, UIMessage } from 'ai';
 import cx from 'classnames';
 import type React from 'react';
 import {
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
-  type Dispatch,
-  type SetStateAction,
   type ChangeEvent,
+  type Dispatch,
   memo,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
 import { toast } from 'sonner';
 import { useLocalStorage, useWindowSize } from 'usehooks-ts';
@@ -180,6 +180,10 @@ function PureMultimodalInput({
         console.error('Error uploading files!', error);
       } finally {
         setUploadQueue([]);
+        // Clear the file input to allow re-uploading the same file
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
     },
     [setAttachments],
@@ -192,6 +196,21 @@ function PureMultimodalInput({
       scrollToBottom();
     }
   }, [status, scrollToBottom]);
+
+  const removeAttachment = useCallback(
+    (attachmentToRemove: Attachment) => {
+      setAttachments((currentAttachments) =>
+        currentAttachments.filter(
+          (attachment) => attachment.url !== attachmentToRemove.url,
+        ),
+      );
+      // Clear the file input to allow re-uploading the same file
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    },
+    [setAttachments],
+  );
 
   return (
     <div className="relative w-full flex flex-col gap-4">
@@ -246,7 +265,11 @@ function PureMultimodalInput({
           className="flex flex-row gap-2 items-end"
         >
           {attachments.map((attachment) => (
-            <PreviewAttachment key={attachment.url} attachment={attachment} />
+            <PreviewAttachment
+              key={attachment.url}
+              attachment={attachment}
+              onRemove={() => removeAttachment(attachment)}
+            />
           ))}
 
           {uploadQueue.map((filename) => (
