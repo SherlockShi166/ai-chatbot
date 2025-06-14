@@ -11,6 +11,7 @@ import {
   createStreamId,
   deleteChatById,
   getChatById,
+  getLatestImageDocumentByUserId,
   getMessageCountByUserId,
   getMessagesByChatId,
   getStreamIdsByChatId,
@@ -207,23 +208,27 @@ export async function POST(request: Request) {
     let hasExistingImages = false;
     let latestImageDocumentId: string | undefined;
 
-    // 从最新消息开始倒序查找
+    // 方法1: 从最新消息开始倒序查找AI创建的图片文档
     for (let i = previousMessages.length - 1; i >= 0; i--) {
       const msg = previousMessages[i];
       if (msg.role === 'assistant' && msg.parts) {
         try {
-          const parts = Array.isArray(msg.parts) ? msg.parts : JSON.parse(msg.parts as string);
-          const imagePart = parts.find((part: any) => 
-            part.type === 'tool-invocation' &&
-            (part.toolInvocation?.toolName === 'createDocument' || part.toolInvocation?.toolName === 'updateDocument') &&
-            part.toolInvocation?.args?.kind === 'image' &&
-            part.toolInvocation?.result?.id
+          const parts = Array.isArray(msg.parts)
+            ? msg.parts
+            : JSON.parse(msg.parts as string);
+          const imagePart = parts.find(
+            (part: any) =>
+              part.type === 'tool-invocation' &&
+              (part.toolInvocation?.toolName === 'createDocument' ||
+                part.toolInvocation?.toolName === 'updateDocument') &&
+              part.toolInvocation?.args?.kind === 'image' &&
+              part.toolInvocation?.result?.id,
           );
-          
+
           if (imagePart) {
             hasExistingImages = true;
             latestImageDocumentId = imagePart.toolInvocation.result.id;
-            console.log('🎯 找到最新图片文档:', {
+            console.log('🎯 找到AI创建的图片文档:', {
               documentId: latestImageDocumentId,
               toolName: imagePart.toolInvocation.toolName,
               messageIndex: i,
@@ -233,6 +238,31 @@ export async function POST(request: Request) {
         } catch (error) {
           console.error('解析消息parts出错:', error);
         }
+      }
+    }
+
+    // 方法2: 如果没有找到AI创建的图片文档，从数据库查找用户最新的图片文档
+    if (!hasExistingImages && session.user?.id) {
+      console.log(
+        '🔍 未找到AI创建的图片文档，从数据库查找用户最新的图片文档...',
+      );
+
+      try {
+        const latestImageDocument = await getLatestImageDocumentByUserId({
+          userId: session.user.id,
+        });
+
+        if (latestImageDocument) {
+          hasExistingImages = true;
+          latestImageDocumentId = latestImageDocument.id;
+          console.log('🎯 从数据库找到最新图片文档:', {
+            documentId: latestImageDocumentId,
+            title: latestImageDocument.title,
+            createdAt: latestImageDocument.createdAt,
+          });
+        }
+      } catch (error) {
+        console.error('❌ 查询用户最新图片文档失败:', error);
       }
     }
 

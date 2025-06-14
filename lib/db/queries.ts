@@ -596,3 +596,38 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     );
   }
 }
+
+export async function getLatestImageDocumentByUserId({
+  userId,
+}: {
+  userId: string;
+}) {
+  try {
+    console.log('🔍 查询用户最新图片文档:', { userId });
+
+    const [latestImageDocument] = await db
+      .select()
+      .from(document)
+      .where(and(eq(document.userId, userId), eq(document.kind, 'image')))
+      .orderBy(desc(document.createdAt))
+      .limit(1);
+
+    if (latestImageDocument) {
+      console.log('✅ 找到最新图片文档:', {
+        documentId: latestImageDocument.id,
+        title: latestImageDocument.title,
+        createdAt: latestImageDocument.createdAt,
+      });
+    } else {
+      console.log('ℹ️ 未找到图片文档');
+    }
+
+    return latestImageDocument;
+  } catch (error) {
+    console.error('❌ 查询最新图片文档失败:', error);
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get latest image document by user id',
+    );
+  }
+}

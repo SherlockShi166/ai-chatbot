@@ -37,8 +37,11 @@ export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
 
         if (!document) {
           console.error('❌ 文档未找到:', { documentId: id });
+          console.error(
+            '💡 提示: 请确保文档ID正确，或者使用createDocument创建新文档',
+          );
           return {
-            error: 'Document not found',
+            error: `Document with ID "${id}" not found. Please check the document ID or use createDocument to create a new document.`,
           };
         }
 
