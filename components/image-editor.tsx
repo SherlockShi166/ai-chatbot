@@ -19,8 +19,8 @@ export function ImageEditor({
   return (
     <div
       className={cn('flex flex-row items-center justify-center', {
-        'w-full h-[calc(100dvh-110px)]': !isInline,
-        'w-full h-[300px]': isInline,
+        'w-full h-[calc(100dvh-260px)] lg:h-[calc(100dvh-160px)]': !isInline,
+        'w-full h-[320px]': isInline,
       })}
     >
       {status === 'streaming' ? (
@@ -57,16 +57,33 @@ export function ImageEditor({
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4">
-          <picture>
-            <img
-              className={cn('w-full h-fit max-w-[800px] rounded-lg', {
-                'w-full h-fit p-0 md:p-20': !isInline,
-                'w-[300px] h-[300px]': isInline,
-              })}
-              src={`data:image/png;base64,${content}`}
-              alt={title}
-            />
-          </picture>
+          <div 
+            className={cn(
+              'relative rounded-lg overflow-hidden',
+              {
+                'p-0 md:p-8 mt-0 lg:mt-16': !isInline,
+                'p-2': isInline,
+              }
+            )}
+          >
+            <picture
+              className={cn(
+                'block rounded-lg overflow-hidden',
+                // 棋盘背景样式
+                'bg-[linear-gradient(45deg,hsl(var(--muted-foreground)/0.1)_25%,transparent_25%),linear-gradient(-45deg,hsl(var(--muted-foreground)/0.1)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,hsl(var(--muted-foreground)/0.1)_75%),linear-gradient(-45deg,transparent_75%,hsl(var(--muted-foreground)/0.1)_75%)]',
+                'bg-[length:20px_20px] bg-[position:0_0,0_10px,10px_-10px,-10px_0px]'
+              )}
+            >
+              <img
+                className={cn('w-full h-full max-w-[700px] rounded-lg', {
+                  'w-full h-fit': !isInline,
+                  'w-[300px] h-[300px]': isInline,
+                })}
+                src={`data:image/png;base64,${content}`}
+                alt={title}
+              />
+            </picture>
+          </div>
           {!isInline && (
             <div className="text-center">
               <h3 className="text-lg font-semibold">
@@ -74,7 +91,7 @@ export function ImageEditor({
               </h3>
               {/* <p className="text-sm text-muted-foreground mt-1">{title}</p> */}
               <p className="text-xs text-muted-foreground mt-1">
-                Size: 1024x1024px | Format: PNG
+                Size: 1024x1024px | Format: PNG | Transparent Background
               </p>
             </div>
           )}
