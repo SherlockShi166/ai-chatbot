@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       console.log('💾 开始创建document记录...');
       const documentResult = await saveDocument({
         id: documentId,
-        title: `上传的图片: ${filename}`,
+        title: `Uploaded image: ${filename}`,
         content: data.url, // 存储图片URL
         kind: 'image',
         userId: session.user!.id,
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
       const result = {
         ...data,
         documentId, // 返回文档ID给前端
-        title: `上传的图片: ${filename}`,
+        title: `Uploaded image: ${filename}`,
         kind: 'image' as const,
       };
 

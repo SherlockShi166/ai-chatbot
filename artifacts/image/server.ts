@@ -29,11 +29,11 @@ async function generateImage({
 }) {
   // 验证输入参数
   if (!prompt) {
-    throw new Error('图像生成提示词为空');
+    throw new Error('Image generation prompt is empty');
   }
 
   if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY 环境变量未配置');
+    throw new Error('OPENAI_API_KEY environment variable is not configured');
   }
 
   // 调用API图像生成接口，设置较长的超时时间
@@ -65,7 +65,7 @@ async function generateImage({
       const errorText = await response.text();
       console.error('API图像生成错误响应:', errorText);
       throw new Error(
-        `API图像生成调用失败: ${response.status} ${response.statusText} - ${errorText}`,
+        `API image generation failed: ${response.status} ${response.statusText} - ${errorText}`,
       );
     }
 
@@ -77,7 +77,7 @@ async function generateImage({
       result.data.length === 0 ||
       !result.data[0].b64_json
     ) {
-      throw new Error('API返回的图像数据格式不正确');
+      throw new Error('Invalid image data format returned by API');
     }
 
     return {
@@ -105,11 +105,11 @@ async function editImage({
 }) {
   // 验证输入参数
   if (!originalImageBase64) {
-    throw new Error('原始图像数据为空');
+    throw new Error('Original image data is empty');
   }
 
   if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY 环境变量未配置');
+    throw new Error('OPENAI_API_KEY environment variable is not configured');
   }
 
   // 清理 base64 数据
@@ -120,14 +120,14 @@ async function editImage({
 
   // 验证 base64 数据
   if (!base64Data) {
-    throw new Error('无效的 base64 图像数据');
+    throw new Error('Invalid base64 image data');
   }
 
   const binaryData = Buffer.from(base64Data, 'base64');
 
   // 检查图像大小（API 限制为 4MB）
   if (binaryData.length > 4 * 1024 * 1024) {
-    throw new Error('图像文件过大，超过 4MB 限制');
+    throw new Error('Image file too large, exceeds 4MB limit');
   }
 
   // 创建 FormData
@@ -164,7 +164,7 @@ async function editImage({
       const errorText = await response.text();
       console.error('API图像编辑错误响应:', errorText);
       throw new Error(
-        `API图像编辑调用失败: ${response.status} ${response.statusText} - ${errorText}`,
+        `API image editing failed: ${response.status} ${response.statusText} - ${errorText}`,
       );
     }
 
@@ -176,7 +176,7 @@ async function editImage({
       result.data.length === 0 ||
       !result.data[0].b64_json
     ) {
-      throw new Error('API返回的图像编辑数据格式不正确');
+      throw new Error('Invalid image editing data format returned by API');
     }
 
     return {
@@ -253,7 +253,7 @@ export const imageDocumentHandler = createDocumentHandler<'image'>({
     try {
       // 检查是否有原始图像数据
       if (!document.content) {
-        throw new Error('没有原始图像数据，无法进行编辑');
+        throw new Error('No original image data available for editing');
       }
 
       // 使用 /images/edits API

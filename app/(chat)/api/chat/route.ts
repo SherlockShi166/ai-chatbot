@@ -602,7 +602,7 @@ export async function POST(request: Request) {
 
     return new Response(
       JSON.stringify({
-        error: '服务器内部错误，请稍后重试',
+        error: 'Internal server error, please try again later',
         details: error instanceof Error ? error.message : String(error),
       }),
       {

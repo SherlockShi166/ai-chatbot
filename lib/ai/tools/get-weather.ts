@@ -33,7 +33,7 @@ export const getWeather = tool({
 
       if (!response.ok) {
         throw new Error(
-          `天气API请求失败: ${response.status} ${response.statusText}`,
+          `Weather API request failed: ${response.status} ${response.statusText}`,
         );
       }
 
