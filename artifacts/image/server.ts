@@ -1,28 +1,6 @@
 import { myProvider } from '@/lib/ai/providers';
 import { createDocumentHandler } from '@/lib/artifacts/server';
 
-// 重试函数
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 2,
-  baseDelay: number = 1000,
-): Promise<T> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (attempt === maxRetries) {
-        throw error;
-      }
-
-      const delay = baseDelay * Math.pow(2, attempt);
-      console.log(`🔄 第${attempt + 1}次尝试失败，${delay}ms后重试...`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-  throw new Error('All retry attempts failed');
-}
-
 // 定义 API 响应类型
 interface OpenAiImageResponse {
   created: number;
@@ -58,63 +36,61 @@ async function generateImage({
     throw new Error('OPENAI_API_KEY 环境变量未配置');
   }
 
-  return retryWithBackoff(async () => {
-    // 调用API图像生成接口，设置较长的超时时间
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
+  // 调用API图像生成接口，设置较长的超时时间
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
 
-    try {
-      const response = await fetch(
-        `${process.env.OPENAI_BASE_URL}images/generations`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: myProvider.imageModel('small-model').modelId,
-            prompt: prompt,
-            n: 1,
-            size: size,
-          }),
-          signal: controller.signal,
+  try {
+    const response = await fetch(
+      `${process.env.OPENAI_BASE_URL}images/generations`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          model: myProvider.imageModel('small-model').modelId,
+          prompt: prompt,
+          n: 1,
+          size: size,
+        }),
+        signal: controller.signal,
+      },
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API图像生成错误响应:', errorText);
+      throw new Error(
+        `API图像生成调用失败: ${response.status} ${response.statusText} - ${errorText}`,
       );
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API图像生成错误响应:', errorText);
-        throw new Error(
-          `API图像生成调用失败: ${response.status} ${response.statusText} - ${errorText}`,
-        );
-      }
-
-      const result: OpenAiImageResponse = await response.json();
-
-      // 验证响应数据
-      if (
-        !result.data ||
-        result.data.length === 0 ||
-        !result.data[0].b64_json
-      ) {
-        throw new Error('API返回的图像数据格式不正确');
-      }
-
-      return {
-        image: {
-          base64: result.data[0].b64_json,
-        },
-        usage: result.usage,
-      };
-    } catch (error) {
-      clearTimeout(timeoutId);
-      console.error('generateImage 错误:', error);
-      throw error;
     }
-  });
+
+    const result: OpenAiImageResponse = await response.json();
+
+    // 验证响应数据
+    if (
+      !result.data ||
+      result.data.length === 0 ||
+      !result.data[0].b64_json
+    ) {
+      throw new Error('API返回的图像数据格式不正确');
+    }
+
+    return {
+      image: {
+        base64: result.data[0].b64_json,
+      },
+      usage: result.usage,
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.error('generateImage 错误:', error);
+    throw error;
+  }
 }
 
 // 直接调用API编辑图像
@@ -165,57 +141,55 @@ async function editImage({
   formData.append('prompt', prompt);
   formData.append('quality', 'high');
 
-  return retryWithBackoff(async () => {
-    // 调用API图像编辑接口，设置较长的超时时间
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
+  // 调用API图像编辑接口，设置较长的超时时间
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 300000); // 5分钟超时
 
-    try {
-      const response = await fetch(
-        `${process.env.OPENAI_BASE_URL}images/edits`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          },
-          body: formData,
-          signal: controller.signal,
+  try {
+    const response = await fetch(
+      `${process.env.OPENAI_BASE_URL}images/edits`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
+        body: formData,
+        signal: controller.signal,
+      },
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API图像编辑错误响应:', errorText);
+      throw new Error(
+        `API图像编辑调用失败: ${response.status} ${response.statusText} - ${errorText}`,
       );
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API图像编辑错误响应:', errorText);
-        throw new Error(
-          `API图像编辑调用失败: ${response.status} ${response.statusText} - ${errorText}`,
-        );
-      }
-
-      const result: OpenAiImageResponse = await response.json();
-
-      // 验证响应数据
-      if (
-        !result.data ||
-        result.data.length === 0 ||
-        !result.data[0].b64_json
-      ) {
-        throw new Error('API返回的图像编辑数据格式不正确');
-      }
-
-      return {
-        image: {
-          base64: result.data[0].b64_json,
-        },
-        usage: result.usage,
-      };
-    } catch (error) {
-      clearTimeout(timeoutId);
-      console.error('editImage 错误:', error);
-      throw error;
     }
-  });
+
+    const result: OpenAiImageResponse = await response.json();
+
+    // 验证响应数据
+    if (
+      !result.data ||
+      result.data.length === 0 ||
+      !result.data[0].b64_json
+    ) {
+      throw new Error('API返回的图像编辑数据格式不正确');
+    }
+
+    return {
+      image: {
+        base64: result.data[0].b64_json,
+      },
+      usage: result.usage,
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.error('editImage 错误:', error);
+    throw error;
+  }
 }
 
 export const imageDocumentHandler = createDocumentHandler<'image'>({
