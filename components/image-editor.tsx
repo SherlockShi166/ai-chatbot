@@ -18,9 +18,9 @@ export function ImageEditor({
 }: ImageEditorProps) {
   return (
     <div
-      className={cn('flex flex-row items-center justify-center w-full', {
-        'h-[calc(100dvh-60px)]': !isInline,
-        'h-[200px]': isInline,
+      className={cn('flex flex-row items-center justify-center', {
+        'w-full h-[calc(100dvh-110px)]': !isInline,
+        'w-full h-[300px]': isInline,
       })}
     >
       {status === 'streaming' ? (
@@ -59,22 +59,25 @@ export function ImageEditor({
         <div className="flex flex-col items-center gap-4">
           <picture>
             <img
-              className={cn('w-full h-fit max-w-[800px] rounded-lg shadow-lg', {
-                'p-0 md:p-20': !isInline,
+              className={cn('w-full h-fit max-w-[800px] rounded-lg', {
+                'w-full h-fit p-0 md:p-20': !isInline,
+                'w-[300px] h-[300px]': isInline,
               })}
               src={`data:image/png;base64,${content}`}
               alt={title}
             />
           </picture>
-          <div className="text-center">
-            <h3 className="text-lg font-semibold">
-              ✅ Logo generation completed
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">{title}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Size: 1024x1024px | Format: PNG
-            </p>
-          </div>
+          {!isInline && (
+            <div className="text-center">
+              <h3 className="text-lg font-semibold">
+                ✅ Logo generation completed
+              </h3>
+              {/* <p className="text-sm text-muted-foreground mt-1">{title}</p> */}
+              <p className="text-xs text-muted-foreground mt-1">
+                Size: 1024x1024px | Format: PNG
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>

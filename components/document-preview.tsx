@@ -96,6 +96,7 @@ export function DocumentPreview({
           id: artifact.documentId,
           createdAt: new Date(),
           userId: 'noop',
+          messageId: null,
         }
       : null;
 
@@ -135,7 +136,7 @@ const LoadingSkeleton = ({ artifactKind }: { artifactKind: ArtifactKind }) => (
     </div>
     {artifactKind === 'image' ? (
       <div className="overflow-y-scroll border rounded-b-2xl bg-muted border-t-0 dark:border-zinc-700">
-        <div className="animate-pulse h-[257px] bg-muted-foreground/20 w-full" />
+        <div className="animate-pulse h-[400px] bg-muted-foreground/20 w-full" />
       </div>
     ) : (
       <div className="overflow-y-scroll border rounded-b-2xl p-8 pt-4 bg-muted border-t-0 dark:border-zinc-700">
@@ -242,7 +243,7 @@ const DocumentContent = ({ document }: { document: Document }) => {
   const { artifact } = useArtifact();
 
   const containerClassName = cn(
-    'h-[257px] overflow-y-scroll border rounded-b-2xl dark:bg-muted border-t-0 dark:border-zinc-700',
+    'border rounded-b-2xl dark:bg-muted border-t-0 dark:border-zinc-700',
     {
       'p-4 sm:px-14 sm:py-16': document.kind === 'text',
       'p-0': document.kind === 'code',
