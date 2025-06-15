@@ -105,7 +105,7 @@ export async function POST(request: Request) {
         title: `Uploaded image: ${filename}`,
         content: data.url, // 存储图片URL
         kind: 'image',
-        userId: session.user!.id,
+        userId: session.user?.id,
       });
 
       const savedDocument = documentResult[0]; // saveDocument返回数组，取第一个元素

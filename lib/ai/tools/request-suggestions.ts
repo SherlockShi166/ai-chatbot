@@ -101,8 +101,7 @@ export const requestSuggestions = ({
 
           console.log('📤 发送建议数据流:', {
             suggestionId: suggestion.id,
-            originalTextPreview:
-              suggestion.originalText?.substring(0, 50) + '...',
+            originalTextPreview: `${suggestion.originalText?.substring(0, 50)}...`,
           });
 
           dataStream.writeData({

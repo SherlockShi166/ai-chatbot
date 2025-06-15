@@ -15,9 +15,9 @@ export default function Hero() {
     <div className="bg-background">
       <div className="relative min-h-screen">
         {/* Background gradient effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-background to-pink-50/50 dark:from-purple-950/20 dark:via-background dark:to-pink-950/20"></div>
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-300/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-300/10 rounded-full blur-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-background to-pink-50/50 dark:from-purple-950/20 dark:via-background dark:to-pink-950/20" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-300/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-300/10 rounded-full blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl">
           <div className="flex flex-col lg:flex-row items-center min-h-screen">
@@ -54,10 +54,11 @@ export default function Hero() {
                 {/* CTA Button Section */}
                 <div className="mt-10 flex justify-center lg:justify-start">
                   <button
+                    type="button"
                     onClick={handleStartChat}
                     className="group px-10 py-5 text-lg sm:text-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-3 relative overflow-hidden"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
                     <HiSparkles className="w-6 h-6 transition-transform duration-300 group-hover:rotate-12" />
                     <span>Start Generating Logo</span>
                   </button>
@@ -66,15 +67,15 @@ export default function Hero() {
                 {/* Feature indicators */}
                 <div className="mt-8 flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
                     <span>Instant Generation</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
                     <span>High Quality</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-purple-500 rounded-full" />
                     <span>AI Powered</span>
                   </div>
                 </div>
@@ -89,21 +90,21 @@ export default function Hero() {
                   {/* Main logo mockup */}
                   <div className="relative mx-auto w-48 h-48 rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 shadow-2xl transform rotate-3 hover:rotate-6 transition-transform duration-500">
                     <div className="absolute inset-4 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <div className="w-16 h-16 bg-white/30 rounded-xl"></div>
+                      <div className="w-16 h-16 bg-white/30 rounded-xl" />
                     </div>
                   </div>
 
                   {/* Floating elements */}
-                  <div className="absolute -top-8 -left-4 w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl shadow-xl transform -rotate-12 animate-pulse"></div>
-                  <div className="absolute -bottom-4 -right-8 w-20 h-20 bg-gradient-to-r from-pink-500 to-red-500 rounded-xl shadow-lg transform rotate-45 animate-bounce"></div>
-                  <div className="absolute top-1/2 -right-12 w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full shadow-lg animate-pulse"></div>
-                  <div className="absolute top-8 right-8 w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg shadow-md transform rotate-12 animate-bounce"></div>
+                  <div className="absolute -top-8 -left-4 w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl shadow-xl transform -rotate-12 animate-pulse" />
+                  <div className="absolute -bottom-4 -right-8 w-20 h-20 bg-gradient-to-r from-pink-500 to-red-500 rounded-xl shadow-lg transform rotate-45 animate-bounce" />
+                  <div className="absolute top-1/2 -right-12 w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full shadow-lg animate-pulse" />
+                  <div className="absolute top-8 right-8 w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg shadow-md transform rotate-12 animate-bounce" />
                 </div>
 
                 {/* Background decoration */}
                 <div className="absolute inset-0 -z-10">
-                  <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-purple-300/20 rounded-full blur-2xl"></div>
-                  <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-pink-300/20 rounded-full blur-3xl"></div>
+                  <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-purple-300/20 rounded-full blur-2xl" />
+                  <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-pink-300/20 rounded-full blur-3xl" />
                 </div>
               </div>
             </div>

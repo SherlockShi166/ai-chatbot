@@ -57,7 +57,7 @@ const reasoningToDeltas = (text: string): LanguageModelV1StreamPart[] => {
 
 export const getResponseChunksByPrompt = (
   prompt: CoreMessage[],
-  isReasoningEnabled: boolean = false,
+  isReasoningEnabled = false,
 ): Array<LanguageModelV1StreamPart> => {
   const recentMessage = prompt.at(-1);
 

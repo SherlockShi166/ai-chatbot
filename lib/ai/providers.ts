@@ -24,7 +24,7 @@ console.log('\n=== ⚙️ AI 提供商配置 ===');
 console.log('🌐 API Base URL:', process.env.OPENAI_BASE_URL);
 console.log(
   '🔑 API Key 前4位:',
-  process.env.OPENAI_API_KEY?.slice(0, 4) + '****',
+  `${process.env.OPENAI_API_KEY?.slice(0, 4)}****`,
 );
 console.log('🧪 测试环境:', isTestEnvironment);
 console.log('=== ⚙️ 配置加载完成 ===\n');
