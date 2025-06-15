@@ -75,9 +75,9 @@ export function ImageEditor({
               )}
             >
               <img
-                className={cn('w-full h-full max-w-[700px] rounded-lg', {
-                  'w-full h-fit': !isInline,
-                  'w-[300px] h-[300px]': isInline,
+                className={cn('rounded-lg', {
+                  'w-full h-full max-w-[700px]': !isInline,
+                  'w-[280px] h-[280px] max-w-[300px]': isInline,
                 })}
                 src={`data:image/png;base64,${content}`}
                 alt={title}
