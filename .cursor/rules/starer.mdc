@@ -1,0 +1,218 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# AI Chatbot 项目开发规范
+
+## 项目概述
+这是一个基于 Next.js 15 和 AI SDK 构建的现代化 AI 聊天机器人应用，具有以下核心特性：
+- 使用 Next.js App Router 和 React Server Components
+- 集成多种 AI 模型提供商（xAI Grok、OpenAI 等）
+- 基于 Auth.js 的身份验证系统
+- 使用 Drizzle ORM 和 PostgreSQL 进行数据持久化
+- 支持文件上传和多模态交互
+- 实时聊天和消息流处理
+
+## 技术栈
+- **框架**: Next.js 15 (App Router)
+- **语言**: TypeScript
+- **样式**: Tailwind CSS + shadcn/ui
+- **数据库**: PostgreSQL + Drizzle ORM
+- **认证**: Auth.js (NextAuth.js)
+- **AI SDK**: Vercel AI SDK
+- **状态管理**: SWR
+- **包管理器**: pnpm
+- **代码质量**: Biome + ESLint + Prettier
+- **测试**: Playwright
+
+## 编码标准
+
+### 命名规范
+- 文件名使用 kebab-case：`chat-header.tsx`、`use-scroll-to-bottom.tsx`
+- 组件名使用 PascalCase：`ChatHeader`、`MessageActions`
+- 变量和函数名使用 camelCase：`chatId`、`handleSubmit`
+- 常量使用 UPPER_SNAKE_CASE：`MAX_MESSAGE_LENGTH`
+- 类型和接口使用 PascalCase：`Message`、`ChatProps`
+
+### 组件开发
+- 优先使用函数组件和 React Hooks
+- 使用 React Server Components (RSC) 处理服务端逻辑
+- 组件应该是纯函数，避免副作用
+- 使用 TypeScript 严格类型检查
+- 遵循 shadcn/ui 组件模式和设计系统
+
+### 样式规范
+- 使用 Tailwind CSS 进行样式设计
+- 保持深色/浅色主题兼容性
+- 使用 CSS 变量进行主题定制
+- 响应式设计优先（mobile-first）
+- 使用 clsx 和 tailwind-merge 进行条件样式
+
+## 项目结构
+
+### 核心目录
+```
+├── app/                    # Next.js App Router 页面
+│   ├── (auth)/            # 认证相关页面组
+│   ├── (chat)/            # 聊天相关页面组
+│   ├── (main)/            # 主要页面组
+│   ├── layout.tsx         # 根布局
+│   └── globals.css        # 全局样式
+├── components/            # 可复用组件
+│   ├── ui/               # shadcn/ui 基础组件
+│   ├── chat.tsx          # 聊天主组件
+│   ├── message.tsx       # 消息组件
+│   ├── artifact.tsx      # 代码工件组件
+│   └── ...               # 其他业务组件
+├── lib/                  # 核心库代码
+│   ├── ai/              # AI 相关工具
+│   ├── db/              # 数据库相关
+│   ├── artifacts/       # 代码工件处理
+│   ├── editor/          # 编辑器相关
+│   └── utils.ts         # 通用工具函数
+├── hooks/               # 自定义 React Hooks
+├── middleware.ts        # Next.js 中间件
+└── drizzle.config.ts   # 数据库配置
+```
+
+### 文件组织原则
+- 按功能模块组织代码，而非按文件类型
+- 相关组件放在同一目录下
+- 使用 barrel exports (index.ts) 简化导入
+- 服务端组件和客户端组件明确分离
+
+## 开发规范
+
+### 数据库操作
+- 使用 Drizzle ORM 进行数据库操作
+- 所有数据库查询放在 `lib/db/queries.ts` 中
+- 使用类型安全的查询构建器
+- 数据库迁移使用 `pnpm db:migrate`
+- 开发时使用 `pnpm db:studio` 查看数据
+
+### 认证和授权
+- 使用 Auth.js 处理用户认证
+- 支持访客模式和注册用户
+- 中间件处理路由保护
+- 服务端组件中使用 `auth()` 获取会话
+- 客户端组件中使用 `useSession()` 获取会话
+
+### AI 集成
+- 使用 Vercel AI SDK 处理 AI 交互
+- 支持流式响应和工具调用
+- 消息处理使用 Server Actions
+- 支持多模态输入（文本、图片、文件）
+- 使用 `useChat` hook 管理聊天状态
+
+### 状态管理
+- 使用 SWR 进行数据获取和缓存
+- 本地状态使用 React useState/useReducer
+- 全局状态通过 Context API 管理
+- 避免不必要的状态提升
+
+### 错误处理
+- 使用 try-catch 包装异步操作
+- 实现适当的错误边界
+- 使用 toast 通知用户错误
+- 记录错误日志用于调试
+
+### 性能优化
+- 使用 React.memo 优化组件渲染
+- 实现虚拟滚动处理大量消息
+- 使用 Suspense 和 loading.tsx 改善用户体验
+- 图片和文件使用 Vercel Blob 存储
+
+## 开发工作流
+
+### 本地开发
+```bash
+# 安装依赖
+pnpm install
+
+# 启动开发服务器
+pnpm dev
+
+# 数据库操作
+pnpm db:generate  # 生成迁移文件
+pnpm db:migrate   # 执行迁移
+pnpm db:studio    # 打开数据库管理界面
+
+# 代码质量检查
+pnpm lint         # 运行 linter
+pnpm format       # 格式化代码
+```
+
+### 环境变量
+项目需要以下环境变量：
+```
+# 数据库
+POSTGRES_URL=
+
+# 认证
+AUTH_SECRET=
+NEXTAUTH_URL=
+
+# AI 提供商
+XAI_API_KEY=
+OPENAI_API_KEY=
+
+# 文件存储
+BLOB_READ_WRITE_TOKEN=
+
+# Redis (可选)
+REDIS_URL=
+```
+
+### Git 工作流
+- 使用语义化提交信息
+- 功能分支开发，合并前进行代码审查
+- 保持提交历史清晰，避免无意义的提交
+
+## 测试策略
+- 使用 Playwright 进行端到端测试
+- 测试关键用户流程：登录、聊天、文件上传
+- 运行测试：`pnpm test`
+
+## 部署和监控
+- 优先部署到 Vercel 平台
+- 使用 Vercel Analytics 监控性能
+- 配置适当的环境变量
+- 监控数据库连接和 AI API 调用
+
+## 常见问题和最佳实践
+
+### 性能优化
+- 使用 React Server Components 减少客户端 JavaScript
+- 实现适当的缓存策略
+- 优化图片和静态资源加载
+- 使用 Streaming 改善首屏加载时间
+
+### 安全考虑
+- 验证所有用户输入
+- 使用 CSRF 保护
+- 安全存储 API 密钥
+- 实现适当的速率限制
+
+### 可访问性
+- 使用语义化 HTML
+- 提供适当的 ARIA 标签
+- 支持键盘导航
+- 确保颜色对比度符合标准
+
+### 国际化
+- 所有用户界面文本使用英文
+- 为未来的多语言支持预留接口
+- 使用适当的日期和数字格式
+
+## 代码审查清单
+- [ ] 代码符合项目编码标准
+- [ ] 组件具有适当的 TypeScript 类型
+- [ ] 实现了错误处理
+- [ ] 添加了必要的测试
+- [ ] 性能考虑（避免不必要的重渲染）
+- [ ] 可访问性要求
+- [ ] 安全性检查
+- [ ] 文档更新（如需要）
+
+记住：这个项目专注于提供优秀的 AI 聊天体验。在开发过程中，始终考虑用户体验、性能和可维护性。遵循既定的模式和最佳实践，确保代码质量和项目的长期可维护性。
